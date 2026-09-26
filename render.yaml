@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: seonbaeon-backend-1
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: seonbaeon-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: seonbaeon-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: seonbaeon-db
+          property: password
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
