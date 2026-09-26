@@ -6,6 +6,8 @@ services:
     region: singapore
     branch: main
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: seonbaeon-db
