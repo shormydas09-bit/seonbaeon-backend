@@ -40,6 +40,8 @@ public class DataSeeder {
              * Create starter teachers only when the database is empty.
              * Existing teachers will NOT be deleted or recreated.
              */
+            repairExistingTeacherEncoding(teacherRepository);
+
             if (teacherRepository.count() == 0) {
 
                 Teacher jisoo = new Teacher(
@@ -282,6 +284,59 @@ public class DataSeeder {
         };
     }
 
+    private void repairExistingTeacherEncoding(TeacherRepository teacherRepository) {
+        var teachers = teacherRepository.findAll();
+
+        for (Teacher teacher : teachers) {
+            boolean changed = false;
+
+            String qualification = teacher.getQualification();
+
+            if (qualification != null) {
+                String repaired = qualification
+                        .replace(
+                                "TESOL Certified \u00E2\u00A2 Early Childhood English Teaching",
+                                "TESOL Certified \u2022 Early Childhood English Teaching"
+                        )
+                        .replace(
+                                "CELTA \u00E2\u00A2 Young Learner English",
+                                "CELTA \u2022 Young Learner English"
+                        )
+                        .replace(
+                                "MA in Applied Linguistics \u00E2\u00A2 TESOL",
+                                "MA in Applied Linguistics \u2022 TESOL"
+                        )
+                        .replace(
+                                "TESOL Certified \u00E2\u00A2 School English Specialist",
+                                "TESOL Certified \u2022 School English Specialist"
+                        )
+                        .replace(
+                                "BA in English Education \u00E2\u00A2 TESOL",
+                                "BA in English Education \u2022 TESOL"
+                        );
+
+                if (!repaired.equals(qualification)) {
+                    teacher.setQualification(repaired);
+                    changed = true;
+                }
+            }
+
+            String emoji = teacher.getEmoji();
+
+            if (emoji != null && emoji.contains("\u00F0")) {
+                if ("Daniel Choi".equals(teacher.getName())) {
+                    teacher.setEmoji("\uD83D\uDC68\u200D\uD83C\uDFEB");
+                } else {
+                    teacher.setEmoji("\uD83D\uDC69\u200D\uD83C\uDFEB");
+                }
+                changed = true;
+            }
+
+            if (changed) {
+                teacherRepository.save(teacher);
+            }
+        }
+    }
     private TeacherVideo createDemoVideo(
             Teacher teacher,
             String title,
