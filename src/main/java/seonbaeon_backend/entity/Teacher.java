@@ -59,6 +59,30 @@ public class Teacher {
     @Column(nullable = false)
     private String emoji;
 
+    // New professional profile fields
+    @Column(length = 1000)
+    private String profileImageUrl;
+
+    private Double hourlyRate;
+
+    private Integer lessonDuration;
+
+    @Column(length = 1000)
+    private String languages;
+
+    @Column(length = 500)
+    private String ageRange;
+
+    @Column(length = 500)
+    private String teachingMode;
+
+    @Column(length = 1000)
+    private String availability;
+
+    private boolean verified = false;
+
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TeacherVideo> videos = new ArrayList<>();
     @JsonIgnore
     @OneToMany(mappedBy = "teacher")
     private List<Review> reviews = new ArrayList<>();
@@ -66,6 +90,7 @@ public class Teacher {
     public Teacher() {
     }
 
+    // Existing constructor kept so the current DataSeeder does not break.
     public Teacher(
         String name,
         String category,
@@ -117,6 +142,15 @@ public class Teacher {
     public boolean isAvailable() { return available; }
     public String getEmoji() { return emoji; }
 
+    public String getProfileImageUrl() { return profileImageUrl; }
+    public Double getHourlyRate() { return hourlyRate; }
+    public Integer getLessonDuration() { return lessonDuration; }
+    public String getLanguages() { return languages; }
+    public String getAgeRange() { return ageRange; }
+    public String getTeachingMode() { return teachingMode; }
+    public String getAvailability() { return availability; }
+    public boolean isVerified() { return verified; }
+
     public void setName(String name) { this.name = name; }
     public void setCategory(String category) { this.category = category; }
     public void setLocation(String location) { this.location = location; }
@@ -132,4 +166,38 @@ public class Teacher {
     public void setDemoVideoType(String demoVideoType) { this.demoVideoType = demoVideoType; }
     public void setAvailable(boolean available) { this.available = available; }
     public void setEmoji(String emoji) { this.emoji = emoji; }
+    public List<TeacherVideo> getVideos() {
+    return videos;
+}
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setHourlyRate(Double hourlyRate) {
+        this.hourlyRate = hourlyRate;
+    }
+
+    public void setLessonDuration(Integer lessonDuration) {
+        this.lessonDuration = lessonDuration;
+    }
+
+    public void setLanguages(String languages) {
+        this.languages = languages;
+    }
+
+    public void setAgeRange(String ageRange) {
+        this.ageRange = ageRange;
+    }
+
+    public void setTeachingMode(String teachingMode) {
+        this.teachingMode = teachingMode;
+    }
+
+    public void setAvailability(String availability) {
+        this.availability = availability;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
 }

@@ -3,7 +3,9 @@ package seonbaeon_backend.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.Teacher;
+import seonbaeon_backend.entity.TeacherVideo;
 import seonbaeon_backend.repository.TeacherRepository;
+import seonbaeon_backend.repository.TeacherVideoRepository;
 
 import java.util.List;
 import java.util.Set;
@@ -23,9 +25,14 @@ public class TeacherController {
     );
 
     private final TeacherRepository teacherRepository;
+    private final TeacherVideoRepository teacherVideoRepository;
 
-    public TeacherController(TeacherRepository teacherRepository) {
+    public TeacherController(
+            TeacherRepository teacherRepository,
+            TeacherVideoRepository teacherVideoRepository
+    ) {
         this.teacherRepository = teacherRepository;
+        this.teacherVideoRepository = teacherVideoRepository;
     }
 
     @GetMapping
@@ -42,4 +49,16 @@ public class TeacherController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-}
+
+    @GetMapping("/{teacherId}/videos")
+    public ResponseEntity<List<TeacherVideo>> getTeacherVideos(
+            @PathVariable Long teacherId
+    ) {
+        return teacherRepository.findById(teacherId)
+                .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
+                .map(teacher -> ResponseEntity.ok(
+                        teacherVideoRepository.findByTeacherId(teacherId)
+                ))
+                .orElse(ResponseEntity.notFound().build());
+    }
+} 
