@@ -52,12 +52,12 @@ public class DataSeeder {
                         4.9,
                         128,
                         "Friendly & Interactive",
-                        "TESOL Certified â€¢ Early Childhood English Teaching",
+                        "TESOL Certified Ã¢â‚¬Â¢ Early Childhood English Teaching",
                         "A child-friendly English teacher who uses games, stories and simple speaking activities to help Korean children feel comfortable using English.",
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "ðŸ‘©ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
 
                 Teacher hana = new Teacher(
@@ -70,12 +70,12 @@ public class DataSeeder {
                         4.8,
                         96,
                         "Conversation-based",
-                        "CELTA â€¢ Young Learner English",
+                        "CELTA Ã¢â‚¬Â¢ Young Learner English",
                         "Focuses on everyday English speaking, confidence and natural conversation for elementary and middle-school learners.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "ðŸ‘©ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
 
                 Teacher minji = new Teacher(
@@ -88,12 +88,12 @@ public class DataSeeder {
                         4.9,
                         111,
                         "Patient & Supportive",
-                        "MA in Applied Linguistics â€¢ TESOL",
+                        "MA in Applied Linguistics Ã¢â‚¬Â¢ TESOL",
                         "Helps young learners build vocabulary, reading habits and clear English writing step by step.",
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "ðŸ‘©ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
 
                 Teacher daniel = new Teacher(
@@ -106,12 +106,12 @@ public class DataSeeder {
                         4.7,
                         74,
                         "Clear & Step-by-step",
-                        "TESOL Certified â€¢ School English Specialist",
+                        "TESOL Certified Ã¢â‚¬Â¢ School English Specialist",
                         "Explains grammar through simple examples and practice so students can connect classroom English with real communication.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "ðŸ‘¨ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â¨Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
 
                 Teacher sora = new Teacher(
@@ -129,7 +129,7 @@ public class DataSeeder {
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "ðŸ‘©ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
 
                 Teacher yuna = new Teacher(
@@ -142,19 +142,50 @@ public class DataSeeder {
                         4.6,
                         52,
                         "Calm & Encouraging",
-                        "BA in English Education â€¢ TESOL",
+                        "BA in English Education Ã¢â‚¬Â¢ TESOL",
                         "Supports elementary learners with school English, vocabulary, pronunciation and homework-focused practice.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "ðŸ‘©ðŸ»â€ðŸ«"
+                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
                 );
+
+                jisoo.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Jisoo-Kim");
+                hana.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Hana-Jung");
+                minji.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Minji-Park");
+                daniel.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Daniel-Choi");
+                sora.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Sora-Lee");
+                yuna.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Yuna-Choi");
 
                 List<Teacher> savedTeachers = teacherRepository.saveAll(
                         List.of(jisoo, hana, minji, daniel, sora, yuna)
-                );
+                );            
+            /*
+             * Ensure existing teacher records have profile images.
+             * Only blank image fields are updated.
+             */
+            List<Teacher> teachersNeedingImages = teacherRepository.findAll();
 
-                reviewRepository.saveAll(List.of(
+            for (Teacher teacher : teachersNeedingImages) {
+                if (teacher.getProfileImageUrl() == null || teacher.getProfileImageUrl().isBlank()) {
+                    String imageUrl = switch (teacher.getName()) {
+                        case "Jisoo Kim" -> "https://api.dicebear.com/9.x/personas/svg?seed=Jisoo-Kim";
+                        case "Hana Jung" -> "https://api.dicebear.com/9.x/personas/svg?seed=Hana-Jung";
+                        case "Minji Park" -> "https://api.dicebear.com/9.x/personas/svg?seed=Minji-Park";
+                        case "Daniel Choi" -> "https://api.dicebear.com/9.x/personas/svg?seed=Daniel-Choi";
+                        case "Sora Lee" -> "https://api.dicebear.com/9.x/personas/svg?seed=Sora-Lee";
+                        case "Yuna Choi" -> "https://api.dicebear.com/9.x/personas/svg?seed=Yuna-Choi";
+                        default -> null;
+                    };
+
+                    if (imageUrl != null) {
+                        teacher.setProfileImageUrl(imageUrl);
+                    }
+                }
+            }
+
+            teacherRepository.saveAll(teachersNeedingImages);
+            reviewRepository.saveAll(List.of(
                         new Review(savedTeachers.get(0), "Minji", 5, "The class is easy to understand and my child enjoys the activities."),
                         new Review(savedTeachers.get(0), "Sujin", 5, "Very friendly teaching style. My child became more comfortable speaking English."),
 
@@ -175,6 +206,31 @@ public class DataSeeder {
                 ));
             }
 
+            /*
+             * Ensure existing teacher records have profile images.
+             * Only blank image fields are updated.
+             */
+            List<Teacher> teachersNeedingImages = teacherRepository.findAll();
+
+            for (Teacher teacher : teachersNeedingImages) {
+                if (teacher.getProfileImageUrl() == null || teacher.getProfileImageUrl().isBlank()) {
+                    String imageUrl = switch (teacher.getName()) {
+                        case "Jisoo Kim" -> "https://api.dicebear.com/9.x/personas/svg?seed=Jisoo-Kim";
+                        case "Hana Jung" -> "https://api.dicebear.com/9.x/personas/svg?seed=Hana-Jung";
+                        case "Minji Park" -> "https://api.dicebear.com/9.x/personas/svg?seed=Minji-Park";
+                        case "Daniel Choi" -> "https://api.dicebear.com/9.x/personas/svg?seed=Daniel-Choi";
+                        case "Sora Lee" -> "https://api.dicebear.com/9.x/personas/svg?seed=Sora-Lee";
+                        case "Yuna Choi" -> "https://api.dicebear.com/9.x/personas/svg?seed=Yuna-Choi";
+                        default -> null;
+                    };
+
+                    if (imageUrl != null) {
+                        teacher.setProfileImageUrl(imageUrl);
+                    }
+                }
+            }
+
+            teacherRepository.saveAll(teachersNeedingImages);
             /*
              * Ensure every teacher has at least two demo videos.
              *
@@ -242,4 +298,7 @@ public class DataSeeder {
         );
     }
 }
+
+
+
 
