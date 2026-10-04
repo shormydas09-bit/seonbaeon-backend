@@ -6,6 +6,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.User;
 import seonbaeon_backend.repository.UserRepository;
+import seonbaeon_backend.service.PasswordResetService;
 
 import java.util.Map;
 
@@ -16,9 +17,14 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordResetService passwordResetService;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(
+            UserRepository userRepository,
+            PasswordResetService passwordResetService
+    ) {
         this.userRepository = userRepository;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/signup")
@@ -73,6 +79,52 @@ public class UserController {
                 "name", user.getName(),
                 "email", user.getEmail(),
                 "role", user.getRole() == null ? "STUDENT" : user.getRole()
+        ));
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Email is required."));
+        }
+
+        passwordResetService.createResetRequest(email);
+
+        return ResponseEntity.ok(Map.of(
+                "message",
+                "If an account exists with this email, a password reset link has been sent."
+        ));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+
+        if (token == null || token.isBlank()
+                || newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "message",
+                            "A valid reset token and a password of at least 6 characters are required."
+                    ));
+        }
+
+        boolean success = passwordResetService.resetPassword(token, newPassword);
+
+        if (!success) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "message",
+                            "This reset link is invalid or has expired."
+                    ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "message",
+                "Password reset successfully. You can now log in."
         ));
     }
 }
