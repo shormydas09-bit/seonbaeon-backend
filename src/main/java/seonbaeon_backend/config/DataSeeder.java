@@ -52,12 +52,12 @@ public class DataSeeder {
                         4.9,
                         128,
                         "Friendly & Interactive",
-                        "TESOL Certified Ã¢â‚¬Â¢ Early Childhood English Teaching",
+                        "TESOL Certified • Early Childhood English Teaching",
                         "A child-friendly English teacher who uses games, stories and simple speaking activities to help Korean children feel comfortable using English.",
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👩‍🏫"
                 );
 
                 Teacher hana = new Teacher(
@@ -70,12 +70,12 @@ public class DataSeeder {
                         4.8,
                         96,
                         "Conversation-based",
-                        "CELTA Ã¢â‚¬Â¢ Young Learner English",
+                        "CELTA • Young Learner English",
                         "Focuses on everyday English speaking, confidence and natural conversation for elementary and middle-school learners.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👩‍🏫"
                 );
 
                 Teacher minji = new Teacher(
@@ -88,12 +88,12 @@ public class DataSeeder {
                         4.9,
                         111,
                         "Patient & Supportive",
-                        "MA in Applied Linguistics Ã¢â‚¬Â¢ TESOL",
+                        "MA in Applied Linguistics • TESOL",
                         "Helps young learners build vocabulary, reading habits and clear English writing step by step.",
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👩‍🏫"
                 );
 
                 Teacher daniel = new Teacher(
@@ -106,12 +106,12 @@ public class DataSeeder {
                         4.7,
                         74,
                         "Clear & Step-by-step",
-                        "TESOL Certified Ã¢â‚¬Â¢ School English Specialist",
+                        "TESOL Certified • School English Specialist",
                         "Explains grammar through simple examples and practice so students can connect classroom English with real communication.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â¨Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👨‍🏫"
                 );
 
                 Teacher sora = new Teacher(
@@ -129,7 +129,7 @@ public class DataSeeder {
                         DEMO_VIDEO_1,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👩‍🏫"
                 );
 
                 Teacher yuna = new Teacher(
@@ -142,12 +142,12 @@ public class DataSeeder {
                         4.6,
                         52,
                         "Calm & Encouraging",
-                        "BA in English Education Ã¢â‚¬Â¢ TESOL",
+                        "BA in English Education • TESOL",
                         "Supports elementary learners with school English, vocabulary, pronunciation and homework-focused practice.",
                         DEMO_VIDEO_2,
                         "youtube",
                         true,
-                        "Ã°Å¸â€˜Â©Ã°Å¸ÂÂ»Ã¢â‚¬ÂÃ°Å¸ÂÂ«"
+                        "👩‍🏫"
                 );
 
                 jisoo.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Jisoo-Kim");
