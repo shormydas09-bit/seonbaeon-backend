@@ -8,9 +8,11 @@ import seonbaeon_backend.entity.User;
 import seonbaeon_backend.repository.PasswordResetTokenRepository;
 import seonbaeon_backend.repository.UserRepository;
 
+import java.net.URI;
 import java.net.URLEncoder;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -26,7 +28,13 @@ public class PasswordResetService {
                     ? "http://localhost:5173"
                     : System.getenv("FRONTEND_URL");
 
-    private final JavaMailSender mailSender;
+    private final String brevoApiKey =
+            System.getenv("BREVO_API_KEY");
+
+    private final String brevoSenderEmail =
+            System.getenv("BREVO_SENDER_EMAIL") == null
+                    ? "shormydas09@gmail.com"
+                    : System.getenv("BREVO_SENDER_EMAIL");
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -36,14 +44,15 @@ public class PasswordResetService {
 
     private final SecureRandom secureRandom = new SecureRandom();
 
+    private final HttpClient httpClient =
+            HttpClient.newHttpClient();
+
     public PasswordResetService(
             UserRepository userRepository,
-            PasswordResetTokenRepository passwordResetTokenRepository,
-            JavaMailSender mailSender
+            PasswordResetTokenRepository passwordResetTokenRepository
     ) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.mailSender = mailSender;
     }
 
     @Transactional
@@ -95,26 +104,89 @@ public class PasswordResetService {
             String userName,
             String resetLink
     ) {
-        String subject = "Pick My Teacher - Reset Your Password";
+        if (brevoApiKey == null || brevoApiKey.isBlank()) {
+            throw new IllegalStateException("BREVO_API_KEY is not configured.");
+        }
 
-        String body =
-                "Hello " + userName + ",\n\n"
-                + "We received a request to reset your Pick My Teacher password.\n\n"
-                + "Use the link below to create a new password:\n\n"
-                + resetLink + "\n\n"
-                + "This link will expire in 30 minutes and can only be used once.\n\n"
-                + "If you did not request a password reset, you can safely ignore this email.\n\n"
-                + "Pick My Teacher";
+        String safeUserName = escapeHtml(userName);
+        String safeResetLink = escapeHtml(resetLink);
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(recipientEmail);
-        message.setSubject(subject);
-        message.setText(body);
+        String html =
+                "<html><body>"
+                + "<p>Hello " + safeUserName + ",</p>"
+                + "<p>We received a request to reset your Pick My Teacher password.</p>"
+                + "<p>Click the button below to create a new password:</p>"
+                + "<p><a href=\"" + safeResetLink + "\" "
+                + "style=\"display:inline-block;padding:12px 20px;"
+                + "background:#2563eb;color:#ffffff;text-decoration:none;"
+                + "border-radius:8px;\">Reset My Password</a></p>"
+                + "<p>This link will expire in 30 minutes and can only be used once.</p>"
+                + "<p>If you did not request a password reset, you can safely ignore this email.</p>"
+                + "<p>Pick My Teacher</p>"
+                + "</body></html>";
 
-        mailSender.send(message);
+        String json =
+                "{"
+                + "\"sender\":{"
+                + "\"name\":\"Pick My Teacher\","
+                + "\"email\":\"" + escapeJson(brevoSenderEmail) + "\""
+                + "},"
+                + "\"to\":[{"
+                + "\"email\":\"" + escapeJson(recipientEmail) + "\","
+                + "\"name\":\"" + escapeJson(userName) + "\""
+                + "}],"
+                + "\"subject\":\"Pick My Teacher - Reset Your Password\","
+                + "\"htmlContent\":\"" + escapeJson(html) + "\""
+                + "}";
+
+        try {
+            HttpRequest request =
+                    HttpRequest.newBuilder()
+                            .uri(URI.create(
+                                    "https://api.brevo.com/v3/smtp/email"
+                            ))
+                            .header("accept", "application/json")
+                            .header("api-key", brevoApiKey)
+                            .header("content-type", "application/json")
+                            .POST(
+                                    HttpRequest.BodyPublishers.ofString(
+                                            json,
+                                            StandardCharsets.UTF_8
+                                    )
+                            )
+                            .build();
+
+            HttpResponse<String> response =
+                    httpClient.send(
+                            request,
+                            HttpResponse.BodyHandlers.ofString(
+                                    StandardCharsets.UTF_8
+                            )
+                    );
+
+            if (response.statusCode() < 200
+                    || response.statusCode() >= 300) {
+                throw new IllegalStateException(
+                        "Brevo email failed. HTTP "
+                        + response.statusCode()
+                        + ": "
+                        + response.body()
+                );
+            }
+
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "Failed to send password reset email through Brevo.",
+                    e
+            );
+        }
     }
 
     private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+
         return value
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"")
@@ -174,4 +246,3 @@ public class PasswordResetService {
         return true;
     }
 }
-
