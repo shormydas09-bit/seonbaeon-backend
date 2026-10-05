@@ -295,23 +295,23 @@ public class DataSeeder {
             if (qualification != null) {
                 String repaired = qualification
                         .replace(
-                                "TESOL Certified \u00E2\u00A2 Early Childhood English Teaching",
+                                "TESOL Certified \u00E2\u0080\u00A2 Early Childhood English Teaching",
                                 "TESOL Certified \u2022 Early Childhood English Teaching"
                         )
                         .replace(
-                                "CELTA \u00E2\u00A2 Young Learner English",
+                                "CELTA \u00E2\u0080\u00A2 Young Learner English",
                                 "CELTA \u2022 Young Learner English"
                         )
                         .replace(
-                                "MA in Applied Linguistics \u00E2\u00A2 TESOL",
+                                "MA in Applied Linguistics \u00E2\u0080\u00A2 TESOL",
                                 "MA in Applied Linguistics \u2022 TESOL"
                         )
                         .replace(
-                                "TESOL Certified \u00E2\u00A2 School English Specialist",
+                                "TESOL Certified \u00E2\u0080\u00A2 School English Specialist",
                                 "TESOL Certified \u2022 School English Specialist"
                         )
                         .replace(
-                                "BA in English Education \u00E2\u00A2 TESOL",
+                                "BA in English Education \u00E2\u0080\u00A2 TESOL",
                                 "BA in English Education \u2022 TESOL"
                         );
 
