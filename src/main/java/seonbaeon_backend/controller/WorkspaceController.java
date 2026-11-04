@@ -7,6 +7,10 @@ import seonbaeon_backend.entity.*;
 import seonbaeon_backend.repository.*;
 import seonbaeon_backend.service.AuthService;
 import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 @RestController
 @RequestMapping("/api/workspace")
@@ -85,6 +89,32 @@ public class WorkspaceController {
         t.setEmoji("👩‍🏫");
         t.setVerified(false);
         return ResponseEntity.ok(teachers.save(t));
+    }
+
+    @PostMapping("/teacher/profile-image/sign")
+    public ResponseEntity<?> signProfileImageUpload(@RequestHeader(value="Authorization", required=false) String authorization) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"TEACHER".equals(u.getRole())) return forbidden();
+        String cloudName = System.getenv("CLOUDINARY_CLOUD_NAME");
+        String apiKey = System.getenv("CLOUDINARY_API_KEY");
+        String apiSecret = System.getenv("CLOUDINARY_API_SECRET");
+        if (cloudName == null || apiKey == null || apiSecret == null)
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", "Image upload is not configured yet."));
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String publicId = "pick-my-teacher/teacher-" + u.getId() + "-profile";
+        String params = "overwrite=true&public_id=" + publicId + "&timestamp=" + timestamp;
+        try {
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA1"));
+            byte[] digest = mac.doFinal(params.getBytes(StandardCharsets.UTF_8));
+            StringBuilder signature = new StringBuilder();
+            for (byte b : digest) signature.append(String.format("%02x", b));
+            return ResponseEntity.ok(Map.of("cloudName", cloudName, "apiKey", apiKey,
+                    "timestamp", timestamp, "publicId", publicId, "signature", signature.toString()));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(Map.of("message", "Could not prepare image upload."));
+        }
     }
 
     @PostMapping("/teacher/videos")
