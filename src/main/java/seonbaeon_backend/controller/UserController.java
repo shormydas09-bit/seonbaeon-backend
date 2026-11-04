@@ -82,6 +82,13 @@ public class UserController {
                     .body(Map.of("message", "Incorrect email or password."));
         }
 
+        String requestedRole = loginRequest.getRole();
+        if (requestedRole != null && !requestedRole.isBlank()
+                && !requestedRole.trim().equalsIgnoreCase(user.getRole() == null ? "STUDENT" : user.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "This account is not registered as the selected account type."));
+        }
+
         String token = authService.create(user);
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
@@ -154,3 +161,4 @@ public class UserController {
         ));
     }
 }
+
