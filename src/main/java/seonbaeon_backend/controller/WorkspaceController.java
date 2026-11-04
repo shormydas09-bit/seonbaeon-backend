@@ -128,7 +128,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(teachers.findByVerifiedFalse().stream().filter(t -> t.getOwnerUserId() != null).toList());
+        return ResponseEntity.ok(teachers.findByVerifiedFalse().stream().filter(t -> t.getOwnerUserId() != null && t.isAvailable()).toList());
     }
 
     @PostMapping("/admin/teachers/{id}/approve")
@@ -140,6 +140,19 @@ public class WorkspaceController {
         Teacher t = teachers.findById(id).orElse(null);
         if (t == null || t.getOwnerUserId() == null) return ResponseEntity.notFound().build();
         t.setVerified(true);
+        return ResponseEntity.ok(teachers.save(t));
+    }
+
+    @PostMapping("/admin/teachers/{id}/reject")
+    public ResponseEntity<?> rejectTeacher(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"ADMIN".equals(u.getRole())) return forbidden();
+        Teacher t = teachers.findById(id).orElse(null);
+        if (t == null || t.getOwnerUserId() == null || t.isVerified()) return ResponseEntity.notFound().build();
+        // Keep the application and its videos in the database, but hide it from public listings and pending review.
+        t.setAvailable(false);
         return ResponseEntity.ok(teachers.save(t));
     }
 
