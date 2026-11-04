@@ -1,3 +1,97 @@
+package seonbaeon_backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "teachers")
+public class Teacher {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String category;
+
+    @Column(nullable = false)
+    private String location;
+
+    @Column(nullable = false)
+    private String specialty;
+
+    @Column(nullable = false)
+    private String experience;
+
+    @Column(nullable = false)
+    private Integer studentCount;
+
+    @Column(nullable = false)
+    private Double rating;
+
+    @Column(nullable = false)
+    private Integer reviewCount;
+
+    @Column(nullable = false)
+    private String teachingStyle;
+
+    @Column(length = 2000)
+    private String qualification;
+
+    @Column(length = 4000)
+    private String bio;
+
+    @Column(length = 1000)
+    private String demoVideoUrl;
+
+    @Column(nullable = false)
+    private String demoVideoType = "youtube";
+
+    @Column(nullable = false)
+    private boolean available = true;
+
+    @Column(nullable = false)
+    private String emoji;
+
+    @Column(length = 1000)
+    private String profileImageUrl;
+
+    private Double hourlyRate;
+    private Integer lessonDuration;
+
+    @Column(length = 1000)
+    private String languages;
+
+    @Column(length = 500)
+    private String ageRange;
+
+    @Column(length = 500)
+    private String teachingMode;
+
+    @Column(length = 1000)
+    private String availability;
+
+    private boolean verified = false;
+
+    @Column(name = "owner_user_id", unique = true)
+    private Long ownerUserId;
+
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TeacherVideo> videos = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "teacher")
+    private List<Review> reviews = new ArrayList<>();
+
+    public Teacher() {
+    }
+
     public Teacher(
         String name,
         String category,
@@ -57,6 +151,7 @@
     public String getTeachingMode() { return teachingMode; }
     public String getAvailability() { return availability; }
     public boolean isVerified() { return verified; }
+
     @JsonIgnore
     public Long getOwnerUserId() { return ownerUserId; }
 
@@ -75,9 +170,11 @@
     public void setDemoVideoType(String demoVideoType) { this.demoVideoType = demoVideoType; }
     public void setAvailable(boolean available) { this.available = available; }
     public void setEmoji(String emoji) { this.emoji = emoji; }
+
     public List<TeacherVideo> getVideos() {
-    return videos;
-}
+        return videos;
+    }
+
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
