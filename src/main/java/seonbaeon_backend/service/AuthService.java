@@ -1,6 +1,7 @@
 package seonbaeon_backend.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import seonbaeon_backend.entity.AuthSession;
 import seonbaeon_backend.entity.User;
 import seonbaeon_backend.repository.AuthSessionRepository;
@@ -26,6 +27,7 @@ public class AuthService {
             .filter(s -> s.getExpiresAt().isAfter(LocalDateTime.now()))
             .map(AuthSession::getUser);
     }
+    @Transactional
     public void logout(String authorization) {
         if (authorization != null && authorization.startsWith("Bearer "))
             sessions.deleteByToken(authorization.substring(7).trim());
