@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.User;
 import seonbaeon_backend.repository.UserRepository;
 import seonbaeon_backend.service.PasswordResetService;
+import seonbaeon_backend.service.AuthService;
 
 import java.util.Map;
 
@@ -18,13 +19,16 @@ public class UserController {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final PasswordResetService passwordResetService;
+    private final AuthService authService;
 
     public UserController(
             UserRepository userRepository,
-            PasswordResetService passwordResetService
+            PasswordResetService passwordResetService,
+            AuthService authService
     ) {
         this.userRepository = userRepository;
         this.passwordResetService = passwordResetService;
+        this.authService = authService;
     }
 
     @PostMapping("/signup")
@@ -46,7 +50,11 @@ public class UserController {
         user.setName(user.getName().trim());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole("STUDENT");
+        String requestedRole = user.getRole() == null ? "STUDENT" : user.getRole().trim().toUpperCase();
+        if (!requestedRole.equals("STUDENT") && !requestedRole.equals("TEACHER")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only Student or Teacher accounts can be created here."));
+        }
+        user.setRole(requestedRole);
 
         User saved = userRepository.save(user);
 
@@ -74,13 +82,31 @@ public class UserController {
                     .body(Map.of("message", "Incorrect email or password."));
         }
 
+        String token = authService.create(user);
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
                 "name", user.getName(),
                 "email", user.getEmail(),
-                "role", user.getRole() == null ? "STUDENT" : user.getRole()
+                "role", user.getRole() == null ? "STUDENT" : user.getRole(),
+                "token", token
         ));
     }
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        return authService.authenticate(authorization)
+                .map(user -> ResponseEntity.ok(Map.of(
+                        "id", user.getId(), "name", user.getName(),
+                        "email", user.getEmail(), "role", user.getRole()
+                )))
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in again.")));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        authService.logout(authorization);
+        return ResponseEntity.ok(Map.of("message", "Logged out."));
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");

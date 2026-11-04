@@ -17,6 +17,7 @@ public class TeacherController {
 
     private static final Set<String> ENGLISH_CATEGORIES = Set.of(
             "Kids English",
+            "Phonics",
             "Speaking",
             "Reading & Writing",
             "Grammar",
@@ -39,6 +40,7 @@ public class TeacherController {
     public List<Teacher> getTeachers() {
         return teacherRepository.findAll().stream()
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
+                .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .toList();
     }
 
@@ -46,6 +48,7 @@ public class TeacherController {
     public ResponseEntity<Teacher> getTeacher(@PathVariable Long id) {
         return teacherRepository.findById(id)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
+                .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -56,6 +59,7 @@ public class TeacherController {
     ) {
         return teacherRepository.findById(teacherId)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
+                .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .map(teacher -> ResponseEntity.ok(
                         teacherVideoRepository.findByTeacherId(teacherId)
                 ))

@@ -81,6 +81,9 @@ public class Teacher {
 
     private boolean verified = false;
 
+    @Column(name = "owner_user_id", unique = true)
+    private Long ownerUserId;
+
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TeacherVideo> videos = new ArrayList<>();
     @JsonIgnore
@@ -150,6 +153,8 @@ public class Teacher {
     public String getTeachingMode() { return teachingMode; }
     public String getAvailability() { return availability; }
     public boolean isVerified() { return verified; }
+    @JsonIgnore
+    public Long getOwnerUserId() { return ownerUserId; }
 
     public void setName(String name) { this.name = name; }
     public void setCategory(String category) { this.category = category; }
