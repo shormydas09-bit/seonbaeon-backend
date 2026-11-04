@@ -1,99 +1,3 @@
-package seonbaeon_backend.entity;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
-@Table(name = "teachers")
-public class Teacher {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
-    private String category;
-
-    @Column(nullable = false)
-    private String location;
-
-    @Column(nullable = false)
-    private String specialty;
-
-    @Column(nullable = false)
-    private String experience;
-
-    @Column(nullable = false)
-    private Integer studentCount;
-
-    @Column(nullable = false)
-    private Double rating;
-
-    @Column(nullable = false)
-    private Integer reviewCount;
-
-    @Column(nullable = false)
-    private String teachingStyle;
-
-    @Column(length = 2000)
-    private String qualification;
-
-    @Column(length = 4000)
-    private String bio;
-
-    @Column(length = 1000)
-    private String demoVideoUrl;
-
-    @Column(nullable = false)
-    private String demoVideoType = "youtube";
-
-    @Column(nullable = false)
-    private boolean available = true;
-
-    @Column(nullable = false)
-    private String emoji;
-
-    // New professional profile fields
-    @Column(length = 1000)
-    private String profileImageUrl;
-
-    private Double hourlyRate;
-
-    private Integer lessonDuration;
-
-    @Column(length = 1000)
-    private String languages;
-
-    @Column(length = 500)
-    private String ageRange;
-
-    @Column(length = 500)
-    private String teachingMode;
-
-    @Column(length = 1000)
-    private String availability;
-
-    private boolean verified = false;
-
-    @Column(name = "owner_user_id", unique = true)
-    private Long ownerUserId;
-
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TeacherVideo> videos = new ArrayList<>();
-    @JsonIgnore
-    @OneToMany(mappedBy = "teacher")
-    private List<Review> reviews = new ArrayList<>();
-
-    public Teacher() {
-    }
-
-    // Existing constructor kept so the current DataSeeder does not break.
     public Teacher(
         String name,
         String category,
@@ -204,5 +108,9 @@ public class Teacher {
 
     public void setVerified(boolean verified) {
         this.verified = verified;
+    }
+
+    public void setOwnerUserId(Long ownerUserId) {
+        this.ownerUserId = ownerUserId;
     }
 }
