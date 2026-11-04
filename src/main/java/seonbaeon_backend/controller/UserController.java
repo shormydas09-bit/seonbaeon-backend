@@ -108,6 +108,28 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in again.")));
     }
 
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMe(@RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestBody Map<String, String> request) {
+        User user = authService.authenticate(authorization).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in again."));
+        }
+        String name = request.get("name");
+        if (name == null || name.isBlank() || name.trim().length() > 100) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Please enter a name (up to 100 characters)."));
+        }
+        user.setName(name.trim());
+        User saved = userRepository.save(user);
+        return ResponseEntity.ok(Map.of(
+                "id", saved.getId(),
+                "name", saved.getName(),
+                "email", saved.getEmail(),
+                "role", saved.getRole()
+        ));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
         authService.logout(authorization);
