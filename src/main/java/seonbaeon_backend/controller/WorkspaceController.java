@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.*;
 import seonbaeon_backend.repository.*;
 import seonbaeon_backend.service.AuthService;
+import seonbaeon_backend.service.NotificationService;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -25,10 +26,13 @@ public class WorkspaceController {
     private final TeacherVideoRepository videos;
     private final ConsultationRequestRepository consultations;
     private final UserRepository users;
+    private final NotificationService notificationService;
 
     public WorkspaceController(AuthService auth, TeacherRepository teachers,
-            TeacherVideoRepository videos, ConsultationRequestRepository consultations, UserRepository users) {
-        this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations; this.users = users;
+            TeacherVideoRepository videos, ConsultationRequestRepository consultations, UserRepository users,
+            NotificationService notificationService) {
+        this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations;
+        this.users = users; this.notificationService = notificationService;
     }
 
     private User user(String authorization) {
@@ -260,7 +264,10 @@ public class WorkspaceController {
         Teacher t = teachers.findById(id).orElse(null);
         if (t == null || t.getOwnerUserId() == null) return ResponseEntity.notFound().build();
         t.setVerified(true);
-        return ResponseEntity.ok(teachers.save(t));
+        Teacher saved = teachers.save(t);
+        notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile approved",
+                "Your English teacher profile is now approved and visible to students.", "TEACHER_STATUS");
+        return ResponseEntity.ok(saved);
     }
 
     @PostMapping("/admin/teachers/{id}/reject")
@@ -273,7 +280,10 @@ public class WorkspaceController {
         if (t == null || t.getOwnerUserId() == null || t.isVerified()) return ResponseEntity.notFound().build();
         // Keep the application and its videos in the database, but hide it from public listings and pending review.
         t.setAvailable(false);
-        return ResponseEntity.ok(teachers.save(t));
+        Teacher saved = teachers.save(t);
+        notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
+                "Your teacher application was not approved. Please contact support if you need clarification.", "TEACHER_STATUS");
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/admin/consultations")
