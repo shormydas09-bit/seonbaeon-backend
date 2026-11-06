@@ -25,7 +25,8 @@ public class AuthService {
         if (authorization == null || !authorization.startsWith("Bearer ")) return Optional.empty();
         return sessions.findByToken(authorization.substring(7).trim())
             .filter(s -> s.getExpiresAt().isAfter(LocalDateTime.now()))
-            .map(AuthSession::getUser);
+            .map(AuthSession::getUser)
+            .filter(User::isActive);
     }
     @Transactional
     public void logout(String authorization) {
