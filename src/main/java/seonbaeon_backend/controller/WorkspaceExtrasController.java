@@ -130,7 +130,7 @@ public class WorkspaceExtrasController {
     @GetMapping("/admin/reviews")
     public ResponseEntity<?> adminReviews(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
-        return ResponseEntity.ok(reviews.findAll().stream().map(r->Map.of("id",r.getId(),"teacherId",r.getTeacher().getId(),"teacherName",r.getTeacher().getName(),"studentName",r.getStudentName(),"rating",r.getRating(),"text",r.getText(),"createdAt",r.getCreatedAt(),"reported",r.isReported(),"reportReason",r.getReportReason()==null?"":r.getReportReason())).toList());
+        return ResponseEntity.ok(reviews.findAllWithTeacher().stream().map(r->Map.of("id",r.getId(),"teacherId",r.getTeacher().getId(),"teacherName",r.getTeacher().getName(),"studentName",r.getStudentName(),"rating",r.getRating(),"text",r.getText(),"createdAt",r.getCreatedAt(),"reported",r.isReported(),"reportReason",r.getReportReason()==null?"":r.getReportReason())).toList());
     }
     @DeleteMapping("/admin/reviews/{id}")
     public ResponseEntity<?> deleteReview(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id) {
