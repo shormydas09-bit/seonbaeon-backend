@@ -121,7 +121,7 @@ public class WorkspaceController {
         t.setLocation(orDefault(str(body,"location"), "Online"));
         t.setSpecialty(orDefault(str(body,"specialty"), category));
         t.setExperience(orDefault(str(body,"experience"), "Not specified"));
-        t.setStudentCount(0);
+        if (t.getStudentCount() == null) t.setStudentCount(0);
         if (t.getRating() == null) t.setRating(0.0);
         if (t.getReviewCount() == null) t.setReviewCount(0);
         t.setTeachingStyle(orDefault(str(body,"teachingStyle"), "Supportive & Interactive"));
@@ -136,7 +136,6 @@ public class WorkspaceController {
         t.setAvailability(str(body,"availability"));
         t.setAvailable(true);
         t.setEmoji("👩‍🏫");
-        t.setVerified(false);
         return ResponseEntity.ok(teachers.save(t));
     }
 
