@@ -40,7 +40,6 @@ public class TeacherController {
     public List<Teacher> getTeachers() {
         return teacherRepository.findAll().stream()
                 .filter(Teacher::isAvailable)
-                .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
                 .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .toList();
@@ -49,6 +48,7 @@ public class TeacherController {
     @GetMapping("/{id}")
     public ResponseEntity<Teacher> getTeacher(@PathVariable Long id) {
         return teacherRepository.findById(id)
+                .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
                 .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .map(ResponseEntity::ok)
