@@ -11,6 +11,7 @@ public class User {
     @Column(nullable = false, unique = true) private String email;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) @Column(nullable = false) private String password;
     @Column(nullable = false) private String role = "STUDENT";
+    @Column(nullable = false) private boolean active = true;
     @Column(length=1000) private String profileImageUrl;
     private Integer age;
     private String ageGroup;
@@ -29,6 +30,7 @@ public class User {
     public String getEmail(){return email;} public void setEmail(String v){email=v;}
     public String getPassword(){return password;} public void setPassword(String v){password=v;}
     public String getRole(){return role;} public void setRole(String v){role=v;}
+    public boolean isActive(){return active;} public void setActive(boolean v){active=v;}
     public String getProfileImageUrl(){return profileImageUrl;} public void setProfileImageUrl(String v){profileImageUrl=v;}
     public Integer getAge(){return age;} public void setAge(Integer v){age=v;}
     public String getAgeGroup(){return ageGroup;} public void setAgeGroup(String v){ageGroup=v;}
