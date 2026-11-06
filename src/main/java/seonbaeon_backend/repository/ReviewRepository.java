@@ -8,6 +8,9 @@ import seonbaeon_backend.entity.Review;
 import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+    @Query("select r from Review r join fetch r.teacher")
+    List<Review> findAllWithTeacher();
+
     List<Review> findByTeacherIdOrderByCreatedAtDesc(Long teacherId);
     boolean existsByTeacherIdAndReviewerUserId(Long teacherId, Long reviewerUserId);
     long countByTeacherId(Long teacherId);
