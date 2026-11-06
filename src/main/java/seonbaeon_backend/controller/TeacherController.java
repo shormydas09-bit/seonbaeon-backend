@@ -39,6 +39,8 @@ public class TeacherController {
     @GetMapping
     public List<Teacher> getTeachers() {
         return teacherRepository.findAll().stream()
+                .filter(Teacher::isAvailable)
+                .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
                 .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .toList();
