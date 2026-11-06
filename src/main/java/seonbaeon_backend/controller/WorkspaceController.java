@@ -290,6 +290,40 @@ public class WorkspaceController {
         return ResponseEntity.ok(saved);
     }
 
+    @GetMapping("/admin/teachers")
+    public ResponseEntity<?> allTeacherProfiles(@RequestHeader(value="Authorization", required=false) String authorization) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"ADMIN".equals(u.getRole())) return forbidden();
+        return ResponseEntity.ok(teachers.findAll().stream().map(t -> {
+            Map<String,Object> item = new LinkedHashMap<>();
+            item.put("id", t.getId()); item.put("name", t.getName()); item.put("category", t.getCategory());
+            item.put("location", t.getLocation()); item.put("experience", t.getExperience());
+            item.put("verified", t.isVerified()); item.put("available", t.isAvailable());
+            item.put("ownerEmail", users.findById(t.getOwnerUserId() == null ? -1L : t.getOwnerUserId()).map(User::getEmail).orElse(""));
+            return item;
+        }).toList());
+    }
+
+    @DeleteMapping("/admin/teachers/{id}")
+    public ResponseEntity<?> removeTeacherProfile(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"ADMIN".equals(u.getRole())) return forbidden();
+        Teacher t = teachers.findById(id).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
+        // Soft-delete the public profile: preserve account, lessons, consultations and review history.
+        t.setAvailable(false);
+        t.setVerified(false);
+        teachers.save(t);
+        if (t.getOwnerUserId() != null) {
+            notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile removed",
+                    "An administrator removed your public teacher profile. Your account and lesson history remain محفوظ.", "TEACHER_STATUS");
+        }
+        return ResponseEntity.ok(Map.of("message", "Teacher profile removed from public listings."));
+    }
+
     @GetMapping("/admin/consultations")
     public ResponseEntity<?> adminConsultations(@RequestHeader(value="Authorization", required=false) String authorization) {
         User u = user(authorization);
