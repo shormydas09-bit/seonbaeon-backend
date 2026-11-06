@@ -237,6 +237,9 @@ public class WorkspaceController {
         r.setTeacherDecision(status);
         r.setTeacherDecisionAt(java.time.LocalDateTime.now());
         r.setRejectionReason("REJECTED".equals(status) ? reason : null);
+        String teacherHistory = "Teacher: " + status + " at " + java.time.LocalDateTime.now()
+                + ("REJECTED".equals(status) ? " | Reason: " + reason : "");
+        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\\n") + teacherHistory);
         return ResponseEntity.ok(consultations.save(r));
     }
 
@@ -293,9 +296,13 @@ public class WorkspaceController {
         if (!Set.of("PENDING","APPROVED","REJECTED","COMPLETED").contains(status))
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid status."));
         if (!Objects.equals(r.getStatus(), status)) r.setAdminPreviousStatus(r.getStatus());
+        String previousStatus = r.getStatus();
         r.setStatus(status);
         r.setAdminNote(str(body, "adminNote"));
         r.setAdminDecisionAt(java.time.LocalDateTime.now());
+        String adminHistory = "Admin: " + previousStatus + " -> " + status + " at " + r.getAdminDecisionAt()
+                + (r.getAdminNote() == null || r.getAdminNote().isBlank() ? "" : " | Note: " + r.getAdminNote());
+        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\\n") + adminHistory);
         return ResponseEntity.ok(consultations.save(r));
     }
 
@@ -307,7 +314,7 @@ public class WorkspaceController {
         data.put("status",r.getStatus()); data.put("createdAt",r.getCreatedAt());
         data.put("rejectionReason",r.getRejectionReason()); data.put("teacherDecision",r.getTeacherDecision());
         data.put("teacherDecisionAt",r.getTeacherDecisionAt()); data.put("adminPreviousStatus",r.getAdminPreviousStatus());
-        data.put("adminNote",r.getAdminNote()); data.put("adminDecisionAt",r.getAdminDecisionAt());
+        data.put("adminNote",r.getAdminNote()); data.put("adminDecisionAt",r.getAdminDecisionAt()); data.put("decisionHistory",r.getDecisionHistory());
         users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> data.put("studentProfile", studentProfileData(student)));
         return data;
     }
