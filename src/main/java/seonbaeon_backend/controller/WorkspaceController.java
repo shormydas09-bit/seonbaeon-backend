@@ -145,6 +145,24 @@ public class WorkspaceController {
         return ResponseEntity.ok(t == null ? List.of() : videos.findByTeacherId(t.getId()));
     }
 
+    @DeleteMapping("/teacher/videos/{id}")
+    public ResponseEntity<?> deleteTeacherVideo(
+            @RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"TEACHER".equals(u.getRole())) return forbidden();
+        Teacher t = teachers.findByOwnerUserId(u.getId()).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
+        TeacherVideo video = videos.findById(id).orElse(null);
+        if (video == null || video.getTeacher() == null
+                || !Objects.equals(video.getTeacher().getId(), t.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+        videos.delete(video);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/teacher/consultations")
     public ResponseEntity<?> teacherConsultations(@RequestHeader(value="Authorization", required=false) String authorization) {
         User u = user(authorization);
