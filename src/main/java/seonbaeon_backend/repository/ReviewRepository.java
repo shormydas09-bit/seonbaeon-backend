@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByTeacherIdOrderByCreatedAtDesc(Long teacherId);
+    boolean existsByTeacherIdAndReviewerUserId(Long teacherId, Long reviewerUserId);
 }
