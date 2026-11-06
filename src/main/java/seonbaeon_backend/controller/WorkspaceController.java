@@ -389,7 +389,7 @@ public class WorkspaceController {
         data.put("rejectionReason",r.getRejectionReason()); data.put("teacherDecision",r.getTeacherDecision());
         data.put("teacherDecisionAt",r.getTeacherDecisionAt()); data.put("adminPreviousStatus",r.getAdminPreviousStatus());
         data.put("adminNote",r.getAdminNote()); data.put("adminDecisionAt",r.getAdminDecisionAt()); data.put("decisionHistory",r.getDecisionHistory());
-        users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> data.put("studentProfile", studentProfileData(student)));
+        users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> { data.put("studentUserId", student.getId()); data.put("studentProfile", studentProfileData(student)); });
         return data;
     }
 
