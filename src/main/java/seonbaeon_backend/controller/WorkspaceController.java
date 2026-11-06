@@ -243,7 +243,12 @@ public class WorkspaceController {
         String teacherHistory = "Teacher: " + status + " at " + java.time.LocalDateTime.now()
                 + ("REJECTED".equals(status) ? " | Reason: " + reason : "");
         r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\n") + teacherHistory);
-        return ResponseEntity.ok(consultations.save(r));
+        consultations.save(r);
+        users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> notificationService.notifyUser(
+                student.getId(), "Consultation " + status.toLowerCase(),
+                "Your teacher " + ("APPROVED".equals(status) ? "approved" : "rejected") + " your consultation request."
+                        + ("REJECTED".equals(status) ? " Reason: " + reason : ""), "CONSULTATION_STATUS"));
+        return ResponseEntity.ok(consultationData(r));
     }
 
     @GetMapping("/admin/pending-teachers")
@@ -312,7 +317,15 @@ public class WorkspaceController {
         String adminHistory = "Admin: " + previousStatus + " -> " + status + " at " + r.getAdminDecisionAt()
                 + (r.getAdminNote() == null || r.getAdminNote().isBlank() ? "" : " | Note: " + r.getAdminNote());
         r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\n") + adminHistory);
-        return ResponseEntity.ok(consultations.save(r));
+        consultations.save(r);
+        users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> notificationService.notifyUser(
+                student.getId(), "Consultation updated", "Admin changed your consultation status from "
+                        + previousStatus + " to " + status + ".", "CONSULTATION_STATUS"));
+        if (r.getTeacher() != null && r.getTeacher().getOwnerUserId() != null) {
+            notificationService.notifyUser(r.getTeacher().getOwnerUserId(), "Consultation updated",
+                    "Admin changed a consultation status from " + previousStatus + " to " + status + ".", "CONSULTATION_STATUS");
+        }
+        return ResponseEntity.ok(consultationData(r));
     }
 
     private Map<String,Object> consultationData(ConsultationRequest r) {
