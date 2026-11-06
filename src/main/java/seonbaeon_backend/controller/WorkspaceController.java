@@ -230,7 +230,7 @@ public class WorkspaceController {
             return ResponseEntity.badRequest().body(Map.of("message", "Choose APPROVED or REJECTED."));
         if (!"PENDING".equals(r.getStatus()))
             return ResponseEntity.badRequest().body(Map.of("message", "This request has already been reviewed."));
-        String reason = str(body, "rejectionReason");
+        String reason = body.getOrDefault("rejectionReason", "").trim();
         if ("REJECTED".equals(status) && (reason == null || reason.isBlank()))
             return ResponseEntity.badRequest().body(Map.of("message", "Please provide a reason for rejecting this request."));
         r.setStatus(status);
@@ -239,7 +239,7 @@ public class WorkspaceController {
         r.setRejectionReason("REJECTED".equals(status) ? reason : null);
         String teacherHistory = "Teacher: " + status + " at " + java.time.LocalDateTime.now()
                 + ("REJECTED".equals(status) ? " | Reason: " + reason : "");
-        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\\n") + teacherHistory);
+        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\n") + teacherHistory);
         return ResponseEntity.ok(consultations.save(r));
     }
 
