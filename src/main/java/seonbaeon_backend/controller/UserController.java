@@ -82,6 +82,11 @@ public class UserController {
                     .body(Map.of("message", "Incorrect email or password."));
         }
 
+        if (!user.isActive()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "This account has been suspended. Please contact support."));
+        }
+
         String requestedRole = loginRequest.getRole();
         if (requestedRole != null && !requestedRole.isBlank()
                 && !requestedRole.trim().equalsIgnoreCase(user.getRole() == null ? "STUDENT" : user.getRole())) {
