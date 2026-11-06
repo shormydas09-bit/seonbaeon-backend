@@ -60,6 +60,7 @@ public class TeacherController {
             @PathVariable Long teacherId
     ) {
         return teacherRepository.findById(teacherId)
+                .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
                 .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
                 .map(teacher -> ResponseEntity.ok(
