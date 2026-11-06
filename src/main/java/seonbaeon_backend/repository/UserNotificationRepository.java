@@ -10,6 +10,7 @@ import java.util.List;
 public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
     List<UserNotification> findTop50ByRecipientUserIdOrderByCreatedAtDesc(Long recipientUserId);
     long countByRecipientUserIdAndReadFalse(Long recipientUserId);
+    void deleteByRecipientUserId(Long recipientUserId);
     @Modifying
     @Query("update UserNotification n set n.read = true where n.recipientUserId = :userId and n.read = false")
     int markAllReadByRecipient(@Param("userId") Long userId);
