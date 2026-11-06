@@ -134,7 +134,7 @@ public class WorkspaceExtrasController {
     public ResponseEntity<?> teacherAnalytics(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"TEACHER".equals(u.getRole()))return forbidden();
         Teacher t=teachers.findByOwnerUserId(u.getId()).orElse(null);if(t==null)return ResponseEntity.ok(Map.of("consultations",0,"lessons",0,"completedLessons",0,"reviews",0,"averageRating",0));
-        var own=consultations.findByTeacherOwnerUserId(u.getId());var teacherLessons=lessons.findByTeacherIdOrderByScheduledAtDesc(t.getId());
+        var own=consultations.findByTeacherOwnerUserId(u.getId());var teacherLessons=lessons.findByTeacherUserIdOrderByScheduledAtDesc(u.getId());
         return ResponseEntity.ok(Map.of("consultations",own.size(),"pendingConsultations",own.stream().filter(x->"PENDING".equals(x.getStatus())).count(),
             "lessons",teacherLessons.size(),"completedLessons",teacherLessons.stream().filter(x->"COMPLETED".equals(x.getStatus())).count(),
             "reviews",reviews.countByTeacherId(t.getId()),"averageRating",t.getRating(),"students",own.stream().map(x->x.getEmail().toLowerCase(Locale.ROOT)).distinct().count()));
