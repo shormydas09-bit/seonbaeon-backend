@@ -24,10 +24,11 @@ public class WorkspaceController {
     private final TeacherRepository teachers;
     private final TeacherVideoRepository videos;
     private final ConsultationRequestRepository consultations;
+    private final UserRepository users;
 
     public WorkspaceController(AuthService auth, TeacherRepository teachers,
-            TeacherVideoRepository videos, ConsultationRequestRepository consultations) {
-        this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations;
+            TeacherVideoRepository videos, ConsultationRequestRepository consultations, UserRepository users) {
+        this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations; this.users = users;
     }
 
     private User user(String authorization) {
@@ -38,6 +39,50 @@ public class WorkspaceController {
     }
     private ResponseEntity<?> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You do not have permission for this action."));
+    }
+
+    @GetMapping("/student/profile")
+    public ResponseEntity<?> studentProfile(@RequestHeader(value="Authorization", required=false) String authorization) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"STUDENT".equals(u.getRole())) return forbidden();
+        return ResponseEntity.ok(studentProfileData(u));
+    }
+
+    @PutMapping("/student/profile")
+    public ResponseEntity<?> updateStudentProfile(@RequestHeader(value="Authorization", required=false) String authorization,
+            @RequestBody Map<String,Object> body) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"STUDENT".equals(u.getRole())) return forbidden();
+        String name = str(body, "name");
+        if (name == null || name.isBlank() || name.length() > 100)
+            return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid name (maximum 100 characters)."));
+        u.setName(name);
+        u.setProfileImageUrl(str(body,"profileImageUrl"));
+        u.setAge(intNumber(body.get("age")));
+        u.setAgeGroup(str(body,"ageGroup"));
+        u.setEnglishLevel(str(body,"englishLevel"));
+        u.setLearningGoals(str(body,"learningGoals"));
+        u.setPreferredCategory(str(body,"preferredCategory"));
+        u.setInterests(str(body,"interests"));
+        u.setPreferredSchedule(str(body,"preferredSchedule"));
+        u.setIntroduction(str(body,"introduction"));
+        u.setGuardianName(str(body,"guardianName"));
+        u.setGuardianPhone(str(body,"guardianPhone"));
+        return ResponseEntity.ok(studentProfileData(users.save(u)));
+    }
+
+    private Map<String,Object> studentProfileData(User u) {
+        Map<String,Object> data = new LinkedHashMap<>();
+        data.put("id",u.getId()); data.put("name",u.getName()); data.put("email",u.getEmail());
+        data.put("role",u.getRole()); data.put("profileImageUrl",u.getProfileImageUrl());
+        data.put("age",u.getAge()); data.put("ageGroup",u.getAgeGroup()); data.put("englishLevel",u.getEnglishLevel());
+        data.put("learningGoals",u.getLearningGoals()); data.put("preferredCategory",u.getPreferredCategory());
+        data.put("interests",u.getInterests()); data.put("preferredSchedule",u.getPreferredSchedule());
+        data.put("introduction",u.getIntroduction()); data.put("guardianName",u.getGuardianName());
+        data.put("guardianPhone",u.getGuardianPhone());
+        return data;
     }
 
     @GetMapping("/student/consultations")
@@ -185,7 +230,13 @@ public class WorkspaceController {
             return ResponseEntity.badRequest().body(Map.of("message", "Choose APPROVED or REJECTED."));
         if (!"PENDING".equals(r.getStatus()))
             return ResponseEntity.badRequest().body(Map.of("message", "This request has already been reviewed."));
+        String reason = str(body, "rejectionReason");
+        if ("REJECTED".equals(status) && (reason == null || reason.isBlank()))
+            return ResponseEntity.badRequest().body(Map.of("message", "Please provide a reason for rejecting this request."));
         r.setStatus(status);
+        r.setTeacherDecision(status);
+        r.setTeacherDecisionAt(java.time.LocalDateTime.now());
+        r.setRejectionReason("REJECTED".equals(status) ? reason : null);
         return ResponseEntity.ok(consultations.save(r));
     }
 
@@ -241,7 +292,10 @@ public class WorkspaceController {
         String status = body.getOrDefault("status", "").toUpperCase();
         if (!Set.of("PENDING","APPROVED","REJECTED","COMPLETED").contains(status))
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid status."));
+        if (!Objects.equals(r.getStatus(), status)) r.setAdminPreviousStatus(r.getStatus());
         r.setStatus(status);
+        r.setAdminNote(str(body, "adminNote"));
+        r.setAdminDecisionAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(consultations.save(r));
     }
 
