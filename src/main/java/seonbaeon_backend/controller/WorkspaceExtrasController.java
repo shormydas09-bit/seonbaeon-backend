@@ -115,7 +115,7 @@ public class WorkspaceExtrasController {
     @GetMapping("/admin/users")
     public ResponseEntity<?> adminUsers(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
-        return ResponseEntity.ok(users.findAll().stream().map(x->Map.of("id",x.getId(),"name",x.getName(),"email",x.getEmail(),"role",x.getRole())).toList());
+        return ResponseEntity.ok(users.findAll().stream().map(x->{Map<String,Object> item=new LinkedHashMap<>();item.put("id",x.getId());item.put("name",x.getName());item.put("email",x.getEmail());item.put("role",x.getRole());item.put("active",x.isActive());return item;}).toList());
     }
     @PatchMapping("/admin/users/{id}/role")
     public ResponseEntity<?> updateUserRole(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id,@RequestBody Map<String,Object> body) {
@@ -125,6 +125,16 @@ public class WorkspaceExtrasController {
         if(!Set.of("STUDENT","TEACHER","ADMIN").contains(role)||Objects.equals(target.getId(),admin.getId()))
             return ResponseEntity.badRequest().body(Map.of("message","Choose a valid role. You cannot change your own role."));
         target.setRole(role);users.save(target);return ResponseEntity.ok(Map.of("id",target.getId(),"name",target.getName(),"email",target.getEmail(),"role",target.getRole()));
+    }
+
+    @PatchMapping("/admin/users/{id}/status")
+    public ResponseEntity<?> updateUserStatus(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id,@RequestBody Map<String,Object> body) {
+        User admin=current(h);if(admin==null)return noAuth();if(!"ADMIN".equals(admin.getRole()))return forbidden();
+        User target=users.findById(id).orElse(null);if(target==null)return ResponseEntity.notFound().build();
+        if(Objects.equals(target.getId(),admin.getId()))return ResponseEntity.badRequest().body(Map.of("message","You cannot suspend your own admin account."));
+        Object raw=body.get("active");if(!(raw instanceof Boolean active))return ResponseEntity.badRequest().body(Map.of("message","A valid active status is required."));
+        target.setActive(active);users.save(target);
+        return ResponseEntity.ok(Map.of("id",target.getId(),"name",target.getName(),"email",target.getEmail(),"role",target.getRole(),"active",target.isActive()));
     }
 
     @GetMapping("/admin/reviews")
