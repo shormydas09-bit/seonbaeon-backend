@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lessons", indexes = {
-    @Index(name = "idx_lessons_student", columnList = "studentUserId"),
-    @Index(name = "idx_lessons_teacher", columnList = "teacherUserId"),
-    @Index(name = "idx_lessons_scheduled_at", columnList = "scheduledAt")
+    @Index(name = "idx_lessons_student", columnList = "student_user_id"),
+    @Index(name = "idx_lessons_teacher", columnList = "teacher_user_id"),
+    @Index(name = "idx_lessons_scheduled_at", columnList = "scheduled_at")
 })
 public class Lesson {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,9 +16,9 @@ public class Lesson {
     private Long consultationId;
     @Column(nullable = false)
     private Long teacherId;
-    @Column(nullable = false)
+    @Column(name = "teacher_user_id", nullable = false)
     private Long teacherUserId;
-    @Column(nullable = false)
+    @Column(name = "student_user_id", nullable = false)
     private Long studentUserId;
     @Column(nullable = false, length = 120)
     private String teacherName;
@@ -26,7 +26,7 @@ public class Lesson {
     private String studentName;
     @Column(nullable = false, length = 254)
     private String studentEmail;
-    @Column(nullable = false)
+    @Column(name = "scheduled_at", nullable = false)
     private LocalDateTime scheduledAt;
     @Column(nullable = false)
     private Integer durationMinutes = 30;
