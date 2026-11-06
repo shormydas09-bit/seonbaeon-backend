@@ -69,6 +69,30 @@ public class ReviewController {
         ));
     }
 
+
+    @PostMapping("/{teacherId}/reviews/{reviewId}/report")
+    public ResponseEntity<?> reportReview(@PathVariable Long teacherId, @PathVariable Long reviewId,
+            @RequestHeader(value="Authorization", required=false) String authorization,
+            @RequestBody Map<String,Object> body) {
+        User student = authService.authenticate(authorization).orElse(null);
+        if (student == null || !"STUDENT".equalsIgnoreCase(student.getRole()))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Please log in as a student to report a review."));
+        Review review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null || review.getTeacher() == null || !review.getTeacher().getId().equals(teacherId))
+            return ResponseEntity.notFound().build();
+        if (review.getReviewerUserId() != null && review.getReviewerUserId().equals(student.getId()))
+            return ResponseEntity.badRequest().body(Map.of("message","You cannot report your own review."));
+        String reason = String.valueOf(body.getOrDefault("reason","")).trim();
+        if (reason.isBlank() || reason.length() > 1000)
+            return ResponseEntity.badRequest().body(Map.of("message","Please provide a report reason (up to 1000 characters)."));
+        if (review.isReported())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message","This review has already been reported."));
+        review.setReported(true);
+        review.setReportReason(reason);
+        reviewRepository.save(review);
+        return ResponseEntity.ok(Map.of("message","Review reported for administrator moderation."));
+    }
+
     @PostMapping("/{teacherId}/reviews")
     public ResponseEntity<?> addReview(
             @PathVariable Long teacherId,
@@ -88,7 +112,7 @@ public class ReviewController {
 
         boolean eligible = consultationRepository
                 .existsByTeacherIdAndEmailIgnoreCaseAndStatusIn(
-                        teacherId, student.getEmail(), List.of("APPROVED", "COMPLETED"));
+                        teacherId, student.getEmail(), List.of("COMPLETED"));
         if (!eligible) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "You can review this teacher after completing a lesson with them."));
