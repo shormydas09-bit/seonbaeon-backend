@@ -27,12 +27,13 @@ public class WorkspaceController {
     private final ConsultationRequestRepository consultations;
     private final UserRepository users;
     private final NotificationService notificationService;
+    private final DashboardHiddenItemRepository hiddenItems;
 
     public WorkspaceController(AuthService auth, TeacherRepository teachers,
             TeacherVideoRepository videos, ConsultationRequestRepository consultations, UserRepository users,
-            NotificationService notificationService) {
+            NotificationService notificationService, DashboardHiddenItemRepository hiddenItems) {
         this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations;
-        this.users = users; this.notificationService = notificationService;
+        this.users = users; this.notificationService = notificationService; this.hiddenItems = hiddenItems;
     }
 
     private User user(String authorization) {
@@ -94,7 +95,8 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"STUDENT".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(consultations.findByEmailIgnoreCaseOrderByCreatedAtDesc(u.getEmail()));
+        Set<Long> hidden = DashboardCleanupController.hiddenIds(hiddenItems, u.getId(), "CONSULTATION");
+        return ResponseEntity.ok(consultations.findByEmailIgnoreCaseOrderByCreatedAtDesc(u.getEmail()).stream().filter(c -> !hidden.contains(c.getId())).toList());
     }
 
     @GetMapping("/teacher/profile")
@@ -216,7 +218,8 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"TEACHER".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(consultations.findByTeacherOwnerUserId(u.getId()).stream().map(this::consultationData).toList());
+        Set<Long> hidden = DashboardCleanupController.hiddenIds(hiddenItems, u.getId(), "CONSULTATION");
+        return ResponseEntity.ok(consultations.findByTeacherOwnerUserId(u.getId()).stream().filter(c -> !hidden.contains(c.getId())).map(this::consultationData).toList());
     }
 
     @PatchMapping("/teacher/consultations/{id}/status")
@@ -347,7 +350,8 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(consultations.findAll().stream().map(this::consultationData).toList());
+        Set<Long> hidden = DashboardCleanupController.hiddenIds(hiddenItems, u.getId(), "CONSULTATION");
+        return ResponseEntity.ok(consultations.findAll().stream().filter(c -> !hidden.contains(c.getId())).map(this::consultationData).toList());
     }
 
     @PatchMapping("/admin/consultations/{id}/status")
