@@ -153,6 +153,24 @@ public class WorkspaceController {
         return ResponseEntity.ok(consultations.findByTeacherOwnerUserId(u.getId()));
     }
 
+    @PatchMapping("/teacher/consultations/{id}/status")
+    public ResponseEntity<?> updateTeacherConsultation(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id, @RequestBody Map<String,String> body) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"TEACHER".equals(u.getRole())) return forbidden();
+        ConsultationRequest r = consultations.findById(id).orElse(null);
+        if (r == null || r.getTeacher() == null || !Objects.equals(r.getTeacher().getOwnerUserId(), u.getId()))
+            return ResponseEntity.notFound().build();
+        String status = body.getOrDefault("status", "").toUpperCase();
+        if (!Set.of("APPROVED", "REJECTED").contains(status))
+            return ResponseEntity.badRequest().body(Map.of("message", "Choose APPROVED or REJECTED."));
+        if (!"PENDING".equals(r.getStatus()))
+            return ResponseEntity.badRequest().body(Map.of("message", "This request has already been reviewed."));
+        r.setStatus(status);
+        return ResponseEntity.ok(consultations.save(r));
+    }
+
     @GetMapping("/admin/pending-teachers")
     public ResponseEntity<?> pendingTeachers(@RequestHeader(value="Authorization", required=false) String authorization) {
         User u = user(authorization);
