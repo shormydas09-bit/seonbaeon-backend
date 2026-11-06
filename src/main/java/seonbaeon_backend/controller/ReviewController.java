@@ -58,7 +58,7 @@ public class ReviewController {
 
         boolean eligible = consultationRepository
                 .existsByTeacherIdAndEmailIgnoreCaseAndStatusIn(
-                        teacherId, student.getEmail(), List.of("APPROVED", "COMPLETED"));
+                        teacherId, student.getEmail(), List.of("COMPLETED"));
 
         boolean alreadyReviewed = reviewRepository
                 .existsByTeacherIdAndReviewerUserId(teacherId, student.getId());
@@ -91,7 +91,7 @@ public class ReviewController {
                         teacherId, student.getEmail(), List.of("APPROVED", "COMPLETED"));
         if (!eligible) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You can review this teacher after your consultation request has been approved."));
+                    .body(Map.of("message", "You can review this teacher after completing a lesson with them."));
         }
 
         if (reviewRepository.existsByTeacherIdAndReviewerUserId(teacherId, student.getId())) {
