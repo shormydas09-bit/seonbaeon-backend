@@ -213,7 +213,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"TEACHER".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(consultations.findByTeacherOwnerUserId(u.getId()));
+        return ResponseEntity.ok(consultations.findByTeacherOwnerUserId(u.getId()).stream().map(this::consultationData).toList());
     }
 
     @PatchMapping("/teacher/consultations/{id}/status")
@@ -278,7 +278,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(consultations.findAll());
+        return ResponseEntity.ok(consultations.findAll().stream().map(this::consultationData).toList());
     }
 
     @PatchMapping("/admin/consultations/{id}/status")
@@ -297,6 +297,19 @@ public class WorkspaceController {
         r.setAdminNote(str(body, "adminNote"));
         r.setAdminDecisionAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(consultations.save(r));
+    }
+
+    private Map<String,Object> consultationData(ConsultationRequest r) {
+        Map<String,Object> data = new LinkedHashMap<>();
+        data.put("id",r.getId()); data.put("studentName",r.getStudentName()); data.put("email",r.getEmail());
+        data.put("phone",r.getPhone()); data.put("preferredDate",r.getPreferredDate());
+        data.put("preferredTime",r.getPreferredTime()); data.put("message",r.getMessage());
+        data.put("status",r.getStatus()); data.put("createdAt",r.getCreatedAt());
+        data.put("rejectionReason",r.getRejectionReason()); data.put("teacherDecision",r.getTeacherDecision());
+        data.put("teacherDecisionAt",r.getTeacherDecisionAt()); data.put("adminPreviousStatus",r.getAdminPreviousStatus());
+        data.put("adminNote",r.getAdminNote()); data.put("adminDecisionAt",r.getAdminDecisionAt());
+        users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> data.put("studentProfile", studentProfileData(student)));
+        return data;
     }
 
     private static String str(Map<String,Object> m, String k) {
