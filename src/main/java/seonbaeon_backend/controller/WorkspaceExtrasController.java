@@ -39,6 +39,18 @@ public class WorkspaceExtrasController {
                 Set.of("APPROVED","COMPLETED").contains(c.getStatus()));
     }
 
+    @GetMapping("/teacher/students")
+    public ResponseEntity<?> teacherStudents(@RequestHeader(value="Authorization",required=false) String h) {
+        User u=current(h); if(u==null)return noAuth(); if(!"TEACHER".equals(u.getRole()))return forbidden();
+        Map<Long,Map<String,Object>> linkedStudents=new LinkedHashMap<>();
+        for(ConsultationRequest c:consultations.findByTeacherOwnerUserId(u.getId())) {
+            if(!Set.of("APPROVED","COMPLETED").contains(c.getStatus())) continue;
+            users.findByEmailIgnoreCase(c.getEmail()).filter(student -> "STUDENT".equals(student.getRole()))
+                .ifPresent(student -> linkedStudents.put(student.getId(),Map.of("id",student.getId(),"name",student.getName(),"email",student.getEmail())));
+        }
+        return ResponseEntity.ok(new ArrayList<>(linkedStudents.values()));
+    }
+
     // Teacher notes are private to the teacher and the linked student.
     @GetMapping("/teacher/progress")
     public ResponseEntity<?> teacherProgress(@RequestHeader(value="Authorization",required=false) String h) {
