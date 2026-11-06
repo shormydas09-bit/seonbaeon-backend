@@ -137,6 +137,12 @@ public class LessonController {
             return forbidden();
         lesson.setStatus(next);
         lesson.setCancellationReason("CANCELLED".equals(next)?clean(body.get("reason"),1000):null);
+        if ("COMPLETED".equals(next)) {
+            consultations.findById(lesson.getConsultationId()).ifPresent(request -> {
+                request.setStatus("COMPLETED");
+                consultations.save(request);
+            });
+        }
         Lesson saved=lessons.save(lesson);
         String title="COMPLETED".equals(next)?"Lesson completed":"Lesson cancelled";
         notifyOtherParty(user,saved,title,"Your lesson has been marked "+next.toLowerCase(Locale.ROOT)+".");
