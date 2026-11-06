@@ -21,6 +21,9 @@ public class Review {
     @Column(nullable = false)
     private String studentName;
 
+    @Column(name = "reviewer_user_id")
+    private Long reviewerUserId;
+
     @Column(nullable = false)
     private Integer rating;
 
@@ -51,12 +54,14 @@ public class Review {
     public Long getId() { return id; }
     public Teacher getTeacher() { return teacher; }
     public String getStudentName() { return studentName; }
+    public Long getReviewerUserId() { return reviewerUserId; }
     public Integer getRating() { return rating; }
     public String getText() { return text; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void setTeacher(Teacher teacher) { this.teacher = teacher; }
     public void setStudentName(String studentName) { this.studentName = studentName; }
+    public void setReviewerUserId(Long reviewerUserId) { this.reviewerUserId = reviewerUserId; }
     public void setRating(Integer rating) { this.rating = rating; }
     public void setText(String text) { this.text = text; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
