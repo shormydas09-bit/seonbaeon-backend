@@ -319,7 +319,7 @@ public class WorkspaceController {
         teachers.save(t);
         if (t.getOwnerUserId() != null) {
             notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile removed",
-                    "An administrator removed your public teacher profile. Your account and lesson history remain محفوظ.", "TEACHER_STATUS");
+                    "An administrator removed your public teacher profile. Your account and lesson history remain available.", "TEACHER_STATUS");
         }
         return ResponseEntity.ok(Map.of("message", "Teacher profile removed from public listings."));
     }
