@@ -290,6 +290,24 @@ public class WorkspaceController {
         return ResponseEntity.ok(saved);
     }
 
+    @PostMapping("/admin/teachers/{id}/restore")
+    public ResponseEntity<?> restoreTeacherProfile(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"ADMIN".equals(u.getRole())) return forbidden();
+        Teacher t = teachers.findById(id).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
+        t.setAvailable(true);
+        t.setVerified(true);
+        Teacher saved = teachers.save(t);
+        if (t.getOwnerUserId() != null) {
+            notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile restored",
+                    "An administrator restored your public teacher profile. It is now visible to students.", "TEACHER_STATUS");
+        }
+        return ResponseEntity.ok(saved);
+    }
+
     @GetMapping("/admin/teachers")
     public ResponseEntity<?> allTeacherProfiles(@RequestHeader(value="Authorization", required=false) String authorization) {
         User u = user(authorization);
