@@ -1,6 +1,7 @@
 package seonbaeon_backend.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.User;
@@ -36,12 +37,11 @@ public class NotificationController {
         return ResponseEntity.ok(notifications.save(item));
     }
     @PatchMapping("/read-all")
+    @Transactional
     public ResponseEntity<?> markAllRead(@RequestHeader(value="Authorization", required=false) String authorization) {
         User user=auth.authenticate(authorization).orElse(null);
         if(user==null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Please log in again."));
-        List<UserNotification> items=notifications.findTop50ByRecipientUserIdOrderByCreatedAtDesc(user.getId());
-        items.forEach(item->item.setRead(true));
-        notifications.saveAll(items);
-        return ResponseEntity.ok(Map.of("message","Notifications marked as read."));
+        notifications.markAllReadByRecipient(user.getId());
+        return ResponseEntity.ok(Map.of("message","All notifications marked as read."));
     }
 }
