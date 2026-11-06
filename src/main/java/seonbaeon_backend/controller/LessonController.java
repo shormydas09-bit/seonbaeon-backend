@@ -23,10 +23,11 @@ public class LessonController {
     private final TeacherRepository teachers;
     private final UserRepository users;
     private final NotificationService notifications;
+    private final DashboardHiddenItemRepository hiddenItems;
 
     public LessonController(AuthService auth, LessonRepository lessons,
             ConsultationRequestRepository consultations, TeacherRepository teachers,
-            UserRepository users, NotificationService notifications) {
+            UserRepository users, NotificationService notifications, DashboardHiddenItemRepository hiddenItems) {
         this.auth=auth; this.lessons=lessons; this.consultations=consultations;
         this.teachers=teachers; this.users=users; this.notifications=notifications;
     }
@@ -44,11 +45,14 @@ public class LessonController {
         User user=current(authorization);
         if(user==null) return unauthorized();
         if("STUDENT".equals(user.getRole()))
-            return ResponseEntity.ok(lessons.findByStudentUserIdOrderByScheduledAtDesc(user.getId()).stream().map(this::data).toList());
+            Set<Long> hidden=DashboardCleanupController.hiddenIds(hiddenItems,user.getId(),"LESSON");
+            return ResponseEntity.ok(lessons.findByStudentUserIdOrderByScheduledAtDesc(user.getId()).stream().filter(l->!hidden.contains(l.getId())).map(this::data).toList());
         if("TEACHER".equals(user.getRole()))
-            return ResponseEntity.ok(lessons.findByTeacherUserIdOrderByScheduledAtDesc(user.getId()).stream().map(this::data).toList());
+            Set<Long> hidden=DashboardCleanupController.hiddenIds(hiddenItems,user.getId(),"LESSON");
+            return ResponseEntity.ok(lessons.findByTeacherUserIdOrderByScheduledAtDesc(user.getId()).stream().filter(l->!hidden.contains(l.getId())).map(this::data).toList());
         if("ADMIN".equals(user.getRole()))
-            return ResponseEntity.ok(lessons.findAll().stream().map(this::data).toList());
+            Set<Long> hidden=DashboardCleanupController.hiddenIds(hiddenItems,user.getId(),"LESSON");
+            return ResponseEntity.ok(lessons.findAll().stream().filter(l->!hidden.contains(l.getId())).map(this::data).toList());
         return forbidden();
     }
 
