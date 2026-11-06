@@ -7,6 +7,8 @@ import seonbaeon_backend.entity.ConsultationRequest;
 import seonbaeon_backend.entity.Teacher;
 import seonbaeon_backend.repository.ConsultationRequestRepository;
 import seonbaeon_backend.repository.TeacherRepository;
+import seonbaeon_backend.repository.UserRepository;
+import seonbaeon_backend.service.NotificationService;
 
 import java.util.Map;
 
@@ -17,13 +19,19 @@ public class ConsultationController {
 
     private final ConsultationRequestRepository consultationRepository;
     private final TeacherRepository teacherRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ConsultationController(
             ConsultationRequestRepository consultationRepository,
-            TeacherRepository teacherRepository
+            TeacherRepository teacherRepository,
+            UserRepository userRepository,
+            NotificationService notificationService
     ) {
         this.consultationRepository = consultationRepository;
         this.teacherRepository = teacherRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @PostMapping
@@ -59,6 +67,15 @@ public class ConsultationController {
             request.setStatus("PENDING");
 
             ConsultationRequest saved = consultationRepository.save(request);
+            if (teacher.getOwnerUserId() != null) {
+                notificationService.notifyUser(teacher.getOwnerUserId(), "New consultation request",
+                        studentName + " requested a consultation for " + date + " at " + time + ".",
+                        "CONSULTATION_REQUEST");
+            }
+            userRepository.findByEmailIgnoreCase(email).ifPresent(student ->
+                    notificationService.notifyUser(student.getId(), "Request submitted",
+                            "Your consultation request to " + teacher.getName() + " was submitted.",
+                            "CONSULTATION_REQUEST"));
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "id", saved.getId(),
