@@ -36,6 +36,26 @@ public class NotificationController {
         item.setRead(true);
         return ResponseEntity.ok(notifications.save(item));
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteOne(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User user=auth.authenticate(authorization).orElse(null);
+        if(user==null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Please log in again."));
+        UserNotification item=notifications.findById(id).orElse(null);
+        if(item==null || !Objects.equals(item.getRecipientUserId(),user.getId())) return ResponseEntity.notFound().build();
+        notifications.delete(item);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping
+    @Transactional
+    public ResponseEntity<?> deleteAll(@RequestHeader(value="Authorization", required=false) String authorization) {
+        User user=auth.authenticate(authorization).orElse(null);
+        if(user==null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Please log in again."));
+        notifications.deleteByRecipientUserId(user.getId());
+        return ResponseEntity.ok(Map.of("message","All notifications deleted."));
+    }
+
     @PatchMapping("/read-all")
     @Transactional
     public ResponseEntity<?> markAllRead(@RequestHeader(value="Authorization", required=false) String authorization) {
