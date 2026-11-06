@@ -116,6 +116,12 @@ public class ReviewController {
         review.setReviewerUserId(student.getId());
         Review saved = reviewRepository.save(review);
 
+        long reviewCount = reviewRepository.countByTeacherId(teacherId);
+        Double averageRating = reviewRepository.findAverageRatingByTeacherId(teacherId);
+        teacher.setReviewCount((int) reviewCount);
+        teacher.setRating(averageRating == null ? 0.0 : Math.round(averageRating * 100.0) / 100.0);
+        teacherRepository.save(teacher);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 }
