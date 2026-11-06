@@ -33,6 +33,12 @@ public class Review {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable=false)
+    private boolean reported = false;
+
+    @Column(length=1000)
+    private String reportReason;
+
     public Review() {
     }
 
@@ -58,6 +64,8 @@ public class Review {
     public Integer getRating() { return rating; }
     public String getText() { return text; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public boolean isReported() { return reported; }
+    public String getReportReason() { return reportReason; }
 
     public void setTeacher(Teacher teacher) { this.teacher = teacher; }
     public void setStudentName(String studentName) { this.studentName = studentName; }
@@ -65,4 +73,6 @@ public class Review {
     public void setRating(Integer rating) { this.rating = rating; }
     public void setText(String text) { this.text = text; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setReported(boolean reported) { this.reported = reported; }
+    public void setReportReason(String reportReason) { this.reportReason = reportReason; }
 }
