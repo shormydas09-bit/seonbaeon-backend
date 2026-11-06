@@ -298,11 +298,11 @@ public class WorkspaceController {
         if (!Objects.equals(r.getStatus(), status)) r.setAdminPreviousStatus(r.getStatus());
         String previousStatus = r.getStatus();
         r.setStatus(status);
-        r.setAdminNote(str(body, "adminNote"));
+        r.setAdminNote(body.getOrDefault("adminNote", "").trim());
         r.setAdminDecisionAt(java.time.LocalDateTime.now());
         String adminHistory = "Admin: " + previousStatus + " -> " + status + " at " + r.getAdminDecisionAt()
                 + (r.getAdminNote() == null || r.getAdminNote().isBlank() ? "" : " | Note: " + r.getAdminNote());
-        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\\n") + adminHistory);
+        r.setDecisionHistory((r.getDecisionHistory() == null ? "" : r.getDecisionHistory() + "\n") + adminHistory);
         return ResponseEntity.ok(consultations.save(r));
     }
 
