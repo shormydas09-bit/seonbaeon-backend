@@ -116,6 +116,29 @@ public class WorkspaceController {
         if (!"TEACHER".equals(u.getRole())) return forbidden();
         String category = str(body, "category");
         if (!CATEGORIES.contains(category)) return ResponseEntity.badRequest().body(Map.of("message", "Choose a valid English teaching category."));
+        String[] requiredFields = {"specialty", "experience", "qualification", "bio", "languages", "ageRange", "teachingMode", "availability"};
+        for (String field : requiredFields) {
+            String value = str(body, field);
+            if (value == null || value.isBlank()) {
+                String label = switch (field) {
+                    case "specialty" -> "Teaching specialty";
+                    case "experience" -> "Teaching experience";
+                    case "qualification" -> "Qualifications";
+                    case "bio" -> "Teaching introduction";
+                    case "languages" -> "Languages";
+                    case "ageRange" -> "Student age range";
+                    case "teachingMode" -> "Teaching mode";
+                    default -> "Weekly availability";
+                };
+                return ResponseEntity.badRequest().body(Map.of("message", label + " is required."));
+            }
+        }
+        Double hourlyRate = number(body.get("hourlyRate"));
+        Integer lessonDuration = intNumber(body.get("lessonDuration"));
+        if (hourlyRate == null || hourlyRate <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid hourly rate greater than zero."));
+        if (lessonDuration == null || lessonDuration < 15 || lessonDuration > 240)
+            return ResponseEntity.badRequest().body(Map.of("message", "Lesson duration must be between 15 and 240 minutes."));
         Teacher t = teachers.findByOwnerUserId(u.getId()).orElseGet(Teacher::new);
         t.setOwnerUserId(u.getId());
         t.setName(u.getName());
@@ -130,13 +153,15 @@ public class WorkspaceController {
         t.setQualification(str(body,"qualification"));
         t.setBio(str(body,"bio"));
         t.setProfileImageUrl(str(body,"profileImageUrl"));
-        t.setHourlyRate(number(body.get("hourlyRate")));
-        t.setLessonDuration(intNumber(body.get("lessonDuration")));
+        t.setHourlyRate(hourlyRate);
+        t.setLessonDuration(lessonDuration);
         t.setLanguages(str(body,"languages"));
         t.setAgeRange(str(body,"ageRange"));
         t.setTeachingMode(str(body,"teachingMode"));
         t.setAvailability(str(body,"availability"));
+        // Every submission or edit must return to the admin review queue.
         t.setAvailable(true);
+        t.setVerified(false);
         t.setEmoji("👩‍🏫");
         return ResponseEntity.ok(teachers.save(t));
     }
