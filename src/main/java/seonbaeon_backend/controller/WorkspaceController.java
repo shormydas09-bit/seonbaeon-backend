@@ -105,9 +105,9 @@ public class WorkspaceController {
         String publicId = "pick-my-teacher/teacher-" + u.getId() + "-profile";
         String params = "overwrite=true&public_id=" + publicId + "&timestamp=" + timestamp;
         try {
-            Mac mac = Mac.getInstance("HmacSHA1");
-            mac.init(new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA1"));
-            byte[] digest = mac.doFinal(params.getBytes(StandardCharsets.UTF_8));
+            String toSign = params + apiSecret;
+            byte[] digest = MessageDigest.getInstance("SHA-1")
+                    .digest(toSign.getBytes(StandardCharsets.UTF_8));
             StringBuilder signature = new StringBuilder();
             for (byte b : digest) signature.append(String.format("%02x", b));
             return ResponseEntity.ok(Map.of("cloudName", cloudName, "apiKey", apiKey,
