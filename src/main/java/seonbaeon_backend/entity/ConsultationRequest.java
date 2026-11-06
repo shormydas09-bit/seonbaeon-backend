@@ -24,6 +24,7 @@ public class ConsultationRequest {
     private String adminPreviousStatus;
     @Column(length=1000) private String adminNote;
     private LocalDateTime adminDecisionAt;
+    @Column(length=5000) private String decisionHistory;
     private LocalDateTime createdAt;
 
     public ConsultationRequest() {}
@@ -43,5 +44,5 @@ public class ConsultationRequest {
     public void setCreatedAt(LocalDateTime v){createdAt=v;} public void setRejectionReason(String v){rejectionReason=v;}
     public void setTeacherDecision(String v){teacherDecision=v;} public void setTeacherDecisionAt(LocalDateTime v){teacherDecisionAt=v;}
     public void setAdminPreviousStatus(String v){adminPreviousStatus=v;} public void setAdminNote(String v){adminNote=v;}
-    public void setAdminDecisionAt(LocalDateTime v){adminDecisionAt=v;}
+    public void setAdminDecisionAt(LocalDateTime v){adminDecisionAt=v;} public void setDecisionHistory(String v){decisionHistory=v;}
 }
