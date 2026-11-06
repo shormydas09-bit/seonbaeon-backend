@@ -36,7 +36,7 @@ public class ConsultationRequest {
     public String getStatus(){return status;} public LocalDateTime getCreatedAt(){return createdAt;}
     public String getRejectionReason(){return rejectionReason;} public String getTeacherDecision(){return teacherDecision;}
     public LocalDateTime getTeacherDecisionAt(){return teacherDecisionAt;} public String getAdminPreviousStatus(){return adminPreviousStatus;}
-    public String getAdminNote(){return adminNote;} public LocalDateTime getAdminDecisionAt(){return adminDecisionAt;}
+    public String getAdminNote(){return adminNote;} public LocalDateTime getAdminDecisionAt(){return adminDecisionAt;} public String getDecisionHistory(){return decisionHistory;}
     public void setTeacher(Teacher v){teacher=v;} public void setStudentName(String v){studentName=v;}
     public void setEmail(String v){email=v;} public void setPhone(String v){phone=v;}
     public void setPreferredDate(LocalDate v){preferredDate=v;} public void setPreferredTime(LocalTime v){preferredTime=v;}
