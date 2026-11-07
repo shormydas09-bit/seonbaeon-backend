@@ -288,6 +288,13 @@ public class WorkspaceController {
                 || !Objects.equals(video.getTeacher().getId(), t.getId())) {
             return ResponseEntity.notFound().build();
         }
+        // Clear the legacy profile-level demo URL as well. Otherwise the frontend
+        // restores this old URL when the teacher's saved video list becomes empty.
+        if (Objects.equals(t.getDemoVideoUrl(), video.getVideoUrl())) {
+            t.setDemoVideoUrl(null);
+            t.setDemoVideoType("youtube");
+            teachers.save(t);
+        }
         videos.delete(video);
         return ResponseEntity.noContent().build();
     }
