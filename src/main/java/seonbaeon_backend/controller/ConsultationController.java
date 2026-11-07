@@ -9,6 +9,7 @@ import seonbaeon_backend.repository.ConsultationRequestRepository;
 import seonbaeon_backend.repository.TeacherRepository;
 import seonbaeon_backend.repository.UserRepository;
 import seonbaeon_backend.service.NotificationService;
+import seonbaeon_backend.service.AuthService;
 
 import java.util.Map;
 
@@ -21,21 +22,36 @@ public class ConsultationController {
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuthService auth;
 
     public ConsultationController(
             ConsultationRequestRepository consultationRepository,
             TeacherRepository teacherRepository,
             UserRepository userRepository,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuthService auth
     ) {
         this.consultationRepository = consultationRepository;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.auth = auth;
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> create(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestBody Map<String, Object> body
+    ) {
+        var student = auth.authenticate(authorization).orElse(null);
+        if (student == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Please log in with your Student account to request a consultation."));
+        }
+        if (!"STUDENT".equals(student.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Only Student / Parent accounts can request a consultation."));
+        }
         try {
             Long teacherId = Long.valueOf(String.valueOf(body.get("teacherId")));
             Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
@@ -56,6 +72,10 @@ public class ConsultationController {
                         .body(Map.of("message", "Name, email, preferred date and preferred time are required."));
             }
 
+            if (!student.getEmail().equalsIgnoreCase(email)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Use the email address connected to your Student account."));
+            }
             ConsultationRequest request = new ConsultationRequest();
             request.setTeacher(teacher);
             request.setStudentName(studentName);
