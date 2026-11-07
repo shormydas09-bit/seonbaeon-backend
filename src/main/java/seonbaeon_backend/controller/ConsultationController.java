@@ -60,6 +60,10 @@ public class ConsultationController {
             if (teacher == null) {
                 return ResponseEntity.notFound().build();
             }
+            if (!teacher.isVerified() || !teacher.isAvailable()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("message", "This teacher is not currently accepting lesson requests."));
+            }
 
             String studentName = String.valueOf(body.getOrDefault("studentName", "")).trim();
             String email = String.valueOf(body.getOrDefault("email", "")).trim();
@@ -82,7 +86,11 @@ public class ConsultationController {
             request.setStudentName(studentName);
             request.setEmail(email);
             request.setPhone(phone);
-            request.setPreferredDate(java.time.LocalDate.parse(date));
+            java.time.LocalDate preferredDate = java.time.LocalDate.parse(date);
+            if (preferredDate.isBefore(java.time.LocalDate.now())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Choose today or a future date for your consultation."));
+            }
+            request.setPreferredDate(preferredDate);
             request.setPreferredTime(java.time.LocalTime.parse(time));
             request.setMessage(message);
             request.setStatus("PENDING");
