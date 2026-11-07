@@ -36,6 +36,9 @@ public class Review {
     @Column(nullable=false)
     private boolean reported = false;
 
+    @Column(nullable=false)
+    private boolean hidden = false;
+
     @Column(length=1000)
     private String reportReason;
 
@@ -65,6 +68,7 @@ public class Review {
     public String getText() { return text; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public boolean isReported() { return reported; }
+    public boolean isHidden() { return hidden; }
     public String getReportReason() { return reportReason; }
 
     public void setTeacher(Teacher teacher) { this.teacher = teacher; }
@@ -74,5 +78,6 @@ public class Review {
     public void setText(String text) { this.text = text; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setReported(boolean reported) { this.reported = reported; }
+    public void setHidden(boolean hidden) { this.hidden = hidden; }
     public void setReportReason(String reportReason) { this.reportReason = reportReason; }
 }
