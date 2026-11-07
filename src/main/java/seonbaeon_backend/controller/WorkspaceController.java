@@ -234,14 +234,13 @@ public class WorkspaceController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", "Video upload is not configured yet."));
         long timestamp = System.currentTimeMillis() / 1000L;
         String publicId = "pick-my-teacher/demo-videos/teacher-" + u.getId() + "-" + UUID.randomUUID();
-        String folder = "pick-my-teacher/demo-videos";
-        String params = "folder=" + folder + "&public_id=" + publicId + "&timestamp=" + timestamp;
+        String params = "public_id=" + publicId + "&timestamp=" + timestamp;
         try {
             byte[] digest = MessageDigest.getInstance("SHA-1").digest((params + apiSecret).getBytes(StandardCharsets.UTF_8));
             StringBuilder signature = new StringBuilder();
             for (byte value : digest) signature.append(String.format("%02x", value));
             return ResponseEntity.ok(Map.of("cloudName", cloudName, "apiKey", apiKey, "timestamp", timestamp,
-                    "publicId", publicId, "folder", folder, "signature", signature.toString()));
+                    "publicId", publicId, "signature", signature.toString()));
         } catch (Exception ex) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Could not prepare video upload."));
         }
