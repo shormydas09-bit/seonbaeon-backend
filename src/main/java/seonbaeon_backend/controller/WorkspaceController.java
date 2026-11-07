@@ -140,6 +140,9 @@ public class WorkspaceController {
         if (lessonDuration == null || lessonDuration < 15 || lessonDuration > 240)
             return ResponseEntity.badRequest().body(Map.of("message", "Lesson duration must be between 15 and 240 minutes."));
         Teacher t = teachers.findByOwnerUserId(u.getId()).orElseGet(Teacher::new);
+        // Preserve admin approval when an already-approved teacher edits profile details.
+        // New or previously unapproved applications remain unverified until admin review.
+        boolean wasVerified = t.isVerified();
         t.setOwnerUserId(u.getId());
         t.setName(u.getName());
         t.setCategory(category);
@@ -161,9 +164,10 @@ public class WorkspaceController {
         t.setAgeRange(str(body,"ageRange"));
         t.setTeachingMode(str(body,"teachingMode"));
         t.setAvailability(str(body,"availability"));
-        // Every submission or edit must return to the admin review queue.
+        // Restore rejected profiles for review, but never revoke an existing approval
+        // merely because an approved teacher updates ordinary profile information.
         t.setAvailable(true);
-        t.setVerified(false);
+        t.setVerified(wasVerified);
         t.setEmoji("👩‍🏫");
         return ResponseEntity.ok(teachers.save(t));
     }
