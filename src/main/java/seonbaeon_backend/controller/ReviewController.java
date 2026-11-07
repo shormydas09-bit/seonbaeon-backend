@@ -38,7 +38,7 @@ public class ReviewController {
 
     @GetMapping("/{teacherId}/reviews")
     public List<Review> getReviews(@PathVariable Long teacherId) {
-        return reviewRepository.findByTeacherIdOrderByCreatedAtDesc(teacherId);
+        return reviewRepository.findByTeacherIdOrderByCreatedAtDesc(teacherId).stream().filter(review -> !review.isHidden()).toList();
     }
 
     @GetMapping("/{teacherId}/reviews/eligibility")
