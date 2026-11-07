@@ -96,7 +96,7 @@ public class WorkspaceController {
         if (u == null) return unauthorized();
         if (!"STUDENT".equals(u.getRole())) return forbidden();
         Set<Long> hidden = DashboardCleanupController.hiddenIds(hiddenItems, u.getId(), "CONSULTATION");
-        return ResponseEntity.ok(consultations.findByEmailIgnoreCaseOrderByCreatedAtDesc(u.getEmail()).stream().filter(c -> !hidden.contains(c.getId())).toList());
+        return ResponseEntity.ok(consultations.findByEmailIgnoreCaseOrderByCreatedAtDesc(u.getEmail()).stream().filter(c -> !hidden.contains(c.getId())).map(this::consultationData).toList());
     }
 
     @GetMapping("/teacher/profile")
@@ -438,6 +438,7 @@ public class WorkspaceController {
     private Map<String,Object> consultationData(ConsultationRequest r) {
         Map<String,Object> data = new LinkedHashMap<>();
         data.put("id",r.getId()); data.put("studentName",r.getStudentName()); data.put("email",r.getEmail());
+        if (r.getTeacher() != null) { data.put("teacherId", r.getTeacher().getId()); data.put("teacherName", r.getTeacher().getName()); data.put("teacherCategory", r.getTeacher().getCategory()); data.put("teacherLocation", r.getTeacher().getLocation()); }
         data.put("phone",r.getPhone()); data.put("preferredDate",r.getPreferredDate());
         data.put("preferredTime",r.getPreferredTime()); data.put("message",r.getMessage());
         data.put("status",r.getStatus()); data.put("createdAt",r.getCreatedAt());
