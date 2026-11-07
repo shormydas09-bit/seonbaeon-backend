@@ -151,6 +151,8 @@ public class WorkspaceController {
         if (t.getReviewCount() == null) t.setReviewCount(0);
         t.setTeachingStyle(orDefault(str(body,"teachingStyle"), "Supportive & Interactive"));
         t.setQualification(str(body,"qualification"));
+        t.setQualificationInstitution(str(body,"qualificationInstitution"));
+        t.setQualificationDocumentUrl(str(body,"qualificationDocumentUrl"));
         t.setBio(str(body,"bio"));
         t.setProfileImageUrl(str(body,"profileImageUrl"));
         t.setHourlyRate(hourlyRate);
@@ -164,6 +166,30 @@ public class WorkspaceController {
         t.setVerified(false);
         t.setEmoji("👩‍🏫");
         return ResponseEntity.ok(teachers.save(t));
+    }
+
+    @PostMapping("/teacher/qualification-document/sign")
+    public ResponseEntity<?> signQualificationDocumentUpload(@RequestHeader(value="Authorization", required=false) String authorization) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"TEACHER".equals(u.getRole())) return forbidden();
+        String cloudName = System.getenv("CLOUDINARY_CLOUD_NAME");
+        String apiKey = System.getenv("CLOUDINARY_API_KEY");
+        String apiSecret = System.getenv("CLOUDINARY_API_SECRET");
+        if (cloudName == null || apiKey == null || apiSecret == null)
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", "Document upload is not configured yet."));
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String publicId = "pick-my-teacher/teacher-" + u.getId() + "-qualification";
+        String params = "overwrite=true&public_id=" + publicId + "&timestamp=" + timestamp;
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-1").digest((params + apiSecret).getBytes(StandardCharsets.UTF_8));
+            StringBuilder signature = new StringBuilder();
+            for (byte value : digest) signature.append(String.format("%02x", value));
+            return ResponseEntity.ok(Map.of("cloudName", cloudName, "apiKey", apiKey, "timestamp", timestamp,
+                    "publicId", publicId, "signature", signature.toString()));
+        } catch (Exception ex) {
+            return ResponseEntity.internalServerError().body(Map.of("message", "Could not prepare document upload."));
+        }
     }
 
     @PostMapping("/teacher/profile-image/sign")
