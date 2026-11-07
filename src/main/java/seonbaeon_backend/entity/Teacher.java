@@ -44,6 +44,12 @@ public class Teacher {
     @Column(length = 2000)
     private String qualification;
 
+    @Column(length = 1000)
+    private String qualificationDocumentUrl;
+
+    @Column(length = 500)
+    private String qualificationInstitution;
+
     @Column(length = 4000)
     private String bio;
 
@@ -137,6 +143,8 @@ public class Teacher {
     public Integer getReviewCount() { return reviewCount; }
     public String getTeachingStyle() { return teachingStyle; }
     public String getQualification() { return qualification; }
+    public String getQualificationDocumentUrl() { return qualificationDocumentUrl; }
+    public String getQualificationInstitution() { return qualificationInstitution; }
     public String getBio() { return bio; }
     public String getDemoVideoUrl() { return demoVideoUrl; }
     public String getDemoVideoType() { return demoVideoType; }
@@ -165,6 +173,8 @@ public class Teacher {
     public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
     public void setTeachingStyle(String teachingStyle) { this.teachingStyle = teachingStyle; }
     public void setQualification(String qualification) { this.qualification = qualification; }
+    public void setQualificationDocumentUrl(String url) { this.qualificationDocumentUrl = url; }
+    public void setQualificationInstitution(String institution) { this.qualificationInstitution = institution; }
     public void setBio(String bio) { this.bio = bio; }
     public void setDemoVideoUrl(String demoVideoUrl) { this.demoVideoUrl = demoVideoUrl; }
     public void setDemoVideoType(String demoVideoType) { this.demoVideoType = demoVideoType; }
