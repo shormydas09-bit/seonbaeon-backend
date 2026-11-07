@@ -140,8 +140,17 @@ public class WorkspaceExtrasController {
     @GetMapping("/admin/reviews")
     public ResponseEntity<?> adminReviews(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
-        return ResponseEntity.ok(reviews.findAllWithTeacher().stream().map(r->Map.of("id",r.getId(),"teacherId",r.getTeacher().getId(),"teacherName",r.getTeacher().getName(),"studentName",r.getStudentName(),"rating",r.getRating(),"text",r.getText(),"createdAt",r.getCreatedAt(),"reported",r.isReported(),"reportReason",r.getReportReason()==null?"":r.getReportReason())).toList());
+        return ResponseEntity.ok(reviews.findAllWithTeacher().stream().map(r->Map.of("id",r.getId(),"teacherId",r.getTeacher().getId(),"teacherName",r.getTeacher().getName(),"studentName",r.getStudentName(),"rating",r.getRating(),"text",r.getText(),"createdAt",r.getCreatedAt(),"reported",r.isReported(),"reportReason",r.getReportReason()==null?"":r.getReportReason(),"hidden",r.isHidden())).toList());
     }
+    @PatchMapping("/admin/reviews/{id}/visibility")
+    public ResponseEntity<?> updateReviewVisibility(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id,@RequestBody Map<String,Object> body) {
+        User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
+        Review review=reviews.findById(id).orElse(null);if(review==null)return ResponseEntity.notFound().build();
+        Object raw=body.get("hidden");if(!(raw instanceof Boolean hidden))return ResponseEntity.badRequest().body(Map.of("message","A valid hidden status is required."));
+        review.setHidden(hidden);reviews.save(review);
+        return ResponseEntity.ok(Map.of("id",review.getId(),"hidden",review.isHidden()));
+    }
+
     @DeleteMapping("/admin/reviews/{id}")
     public ResponseEntity<?> deleteReview(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id) {
         User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
@@ -160,6 +169,17 @@ public class WorkspaceExtrasController {
         return ResponseEntity.ok(Map.of("consultations",own.size(),"pendingConsultations",own.stream().filter(x->"PENDING".equals(x.getStatus())).count(),
             "lessons",teacherLessons.size(),"completedLessons",teacherLessons.stream().filter(x->"COMPLETED".equals(x.getStatus())).count(),
             "reviews",reviews.countByTeacherId(t.getId()),"averageRating",t.getRating(),"students",own.stream().map(x->x.getEmail().toLowerCase(Locale.ROOT)).distinct().count()));
+    }
+
+    @GetMapping("/admin/activity")
+    public ResponseEntity<?> adminActivity(@RequestHeader(value="Authorization",required=false) String h) {
+        User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
+        List<Map<String,Object>> events=new ArrayList<>();
+        for(var item:consultations.findAll()) if(item.getCreatedAt()!=null) events.add(Map.of("type","CONSULTATION","title","New consultation request","detail",item.getStudentName()+" requested "+item.getTeacher().getName(),"status",item.getStatus(),"occurredAt",item.getCreatedAt()));
+        for(var item:lessons.findAll()) if(item.getCreatedAt()!=null) events.add(Map.of("type","LESSON","title","Lesson created","detail",item.getStudentName()+" · "+item.getTeacherName(),"status",item.getStatus(),"occurredAt",item.getCreatedAt()));
+        for(var item:reviews.findAllWithTeacher()) if(item.getCreatedAt()!=null) events.add(Map.of("type","REVIEW","title","Student review submitted","detail",item.getStudentName()+" reviewed "+item.getTeacher().getName(),"status",item.isReported()?"REPORTED":(item.isHidden()?"HIDDEN":"VISIBLE"),"occurredAt",item.getCreatedAt()));
+        events.sort((a,b)->((LocalDateTime)b.get("occurredAt")).compareTo((LocalDateTime)a.get("occurredAt")));
+        return ResponseEntity.ok(events.stream().limit(50).toList());
     }
 
     @GetMapping("/admin/overview")
