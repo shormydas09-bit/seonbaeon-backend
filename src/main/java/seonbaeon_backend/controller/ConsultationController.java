@@ -3,6 +3,7 @@ package seonbaeon_backend.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import seonbaeon_backend.entity.ConsultationRequest;
 import seonbaeon_backend.entity.Teacher;
 import seonbaeon_backend.repository.ConsultationRequestRepository;
@@ -43,12 +44,12 @@ public class ConsultationController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestBody Map<String, Object> body
     ) {
-        var student = auth.authenticate(authorization).orElse(null);
-        if (student == null) {
+        var authenticatedStudent = auth.authenticate(authorization).orElse(null);
+        if (authenticatedStudent == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Please log in with your Student account to request a consultation."));
         }
-        if (!"STUDENT".equals(student.getRole())) {
+        if (!"STUDENT".equals(authenticatedStudent.getRole())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Only Student / Parent accounts can request a consultation."));
         }
@@ -72,7 +73,7 @@ public class ConsultationController {
                         .body(Map.of("message", "Name, email, preferred date and preferred time are required."));
             }
 
-            if (!student.getEmail().equalsIgnoreCase(email)) {
+            if (!authenticatedStudent.getEmail().equalsIgnoreCase(email)) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Use the email address connected to your Student account."));
             }
