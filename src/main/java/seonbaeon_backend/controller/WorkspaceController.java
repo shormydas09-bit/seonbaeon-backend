@@ -354,7 +354,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
-        return ResponseEntity.ok(teachers.findByVerifiedFalse().stream().filter(t -> t.getOwnerUserId() != null && t.isAvailable()).toList());
+        return ResponseEntity.ok(teachers.findByVerifiedFalse().stream().filter(Teacher::isAvailable).toList());
     }
 
     @PostMapping("/admin/teachers/{id}/approve")
@@ -381,7 +381,7 @@ public class WorkspaceController {
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
         Teacher t = teachers.findById(id).orElse(null);
-        if (t == null || t.getOwnerUserId() == null) return ResponseEntity.notFound().build();
+        if (t == null) return ResponseEntity.notFound().build();
         if (t.isVerified()) return ResponseEntity.badRequest().body(Map.of("message", "This teacher is already approved."));
         String reason = body == null ? null : body.get("reason");
         if (reason == null || reason.isBlank() || reason.trim().length() > 1000)
@@ -392,7 +392,7 @@ public class WorkspaceController {
         Teacher saved = teachers.save(t);
         // Rejection must succeed even if notification delivery has a separate failure.
         try {
-            notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
+            if (t.getOwnerUserId() != null) notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
                     "Your teacher application was not approved. Reason: " + reason.trim(), "TEACHER_STATUS");
         } catch (RuntimeException notificationError) {
             System.err.println("Teacher rejection saved, but notification delivery failed: " + notificationError.getMessage());
