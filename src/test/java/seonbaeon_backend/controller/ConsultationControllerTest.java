@@ -38,6 +38,7 @@ class ConsultationControllerTest {
         auth = mock(AuthService.class);
         controller = new ConsultationController(requests, teachers, users, notifications, auth);
         student = new User("Student", "student@example.com", "hashed");
+        student.setRole("STUDENT");
         teacher = new Teacher();
         teacher.setName("English Teacher");
         teacher.setVerified(true);
