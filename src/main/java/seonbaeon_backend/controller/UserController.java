@@ -35,6 +35,9 @@ public class UserController {
     public ResponseEntity<?> signup(@RequestBody User user) {
         if (user.getName() == null || user.getName().isBlank()
                 || user.getEmail() == null || user.getEmail().isBlank()
+                || user.getName().trim().length() > 100
+                || user.getEmail().trim().length() > 254
+                || !user.getEmail().trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
                 || user.getPassword() == null || user.getPassword().length() < 6) {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Name, email and a password of at least 6 characters are required."));
