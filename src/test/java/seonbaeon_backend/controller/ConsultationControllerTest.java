@@ -3,6 +3,7 @@ package seonbaeon_backend.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import seonbaeon_backend.entity.ConsultationRequest;
 import seonbaeon_backend.entity.Teacher;
 import seonbaeon_backend.entity.User;
@@ -45,7 +46,7 @@ class ConsultationControllerTest {
         teacher.setAvailable(true);
         when(auth.authenticate("Bearer student-token")).thenReturn(Optional.of(student));
         when(teachers.findById(7L)).thenReturn(Optional.of(teacher));
-        when(requests.save(any(ConsultationRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(requests.save(any(ConsultationRequest.class))).thenAnswer(invocation -> {\n            ConsultationRequest saved = invocation.getArgument(0);\n            ReflectionTestUtils.setField(saved, "id", 123L);\n            return saved;\n        });
     }
 
     @Test
