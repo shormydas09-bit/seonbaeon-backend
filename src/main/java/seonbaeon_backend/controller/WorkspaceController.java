@@ -141,6 +141,12 @@ public class WorkspaceController {
             return ResponseEntity.badRequest().body(Map.of("message", "Enter a valid hourly rate greater than zero."));
         if (lessonDuration == null || lessonDuration < 15 || lessonDuration > 240)
             return ResponseEntity.badRequest().body(Map.of("message", "Lesson duration must be between 15 and 240 minutes."));
+        String qualificationUrl = str(body, "qualificationDocumentUrl");
+        String profileImageUrl = str(body, "profileImageUrl");
+        if ((qualificationUrl != null && !qualificationUrl.isBlank() && !safeHttpsUrl(qualificationUrl))
+                || (profileImageUrl != null && !profileImageUrl.isBlank() && !safeHttpsUrl(profileImageUrl))) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Uploaded document and profile image must use a valid HTTPS URL."));
+        }
         Teacher t = teachers.findByOwnerUserId(u.getId()).orElseGet(Teacher::new);
         // Preserve admin approval when an already-approved teacher edits profile details.
         // New or previously unapproved applications remain unverified until admin review.
@@ -157,9 +163,9 @@ public class WorkspaceController {
         t.setTeachingStyle(orDefault(str(body,"teachingStyle"), "Supportive & Interactive"));
         t.setQualification(str(body,"qualification"));
         t.setQualificationInstitution(str(body,"qualificationInstitution"));
-        t.setQualificationDocumentUrl(str(body,"qualificationDocumentUrl"));
+        t.setQualificationDocumentUrl(qualificationUrl);
         t.setBio(str(body,"bio"));
-        t.setProfileImageUrl(str(body,"profileImageUrl"));
+        t.setProfileImageUrl(profileImageUrl);
         t.setHourlyRate(hourlyRate);
         t.setLessonDuration(lessonDuration);
         t.setLanguages(str(body,"languages"));
@@ -267,8 +273,11 @@ public class WorkspaceController {
         if (current.size() >= 2) return ResponseEntity.badRequest().body(Map.of("message", "A maximum of two demo videos is allowed."));
         String title = body.getOrDefault("title", "").trim();
         String url = body.getOrDefault("videoUrl", "").trim();
-        if (title.isBlank() || !(url.startsWith("https://") || url.startsWith("http://")))
-            return ResponseEntity.badRequest().body(Map.of("message", "A video title and valid http(s) URL are required."));
+        if (title.isBlank() || title.length() > 120 || url.length() > 1000
+                || !safeHttpUrl(url)
+                || body.getOrDefault("description", "").length() > 2000
+                || body.getOrDefault("thumbnailUrl", "").length() > 1000)
+            return ResponseEntity.badRequest().body(Map.of("message", "Enter a title, a valid http(s) video URL and text within the allowed length limits."));
         TeacherVideo v = new TeacherVideo(title, body.getOrDefault("description",""), url,
                 body.getOrDefault("videoType","youtube"), body.getOrDefault("thumbnailUrl",""), t);
         return ResponseEntity.status(HttpStatus.CREATED).body(videos.save(v));
@@ -526,6 +535,23 @@ public class WorkspaceController {
         data.put("adminNote",r.getAdminNote()); data.put("adminDecisionAt",r.getAdminDecisionAt()); data.put("decisionHistory",r.getDecisionHistory());
         users.findByEmailIgnoreCase(r.getEmail()).ifPresent(student -> { data.put("studentUserId", student.getId()); data.put("studentProfile", studentProfileData(student)); });
         return data;
+    }
+
+    private static boolean safeHttpsUrl(String value) {
+        try {
+            java.net.URI uri = java.net.URI.create(value);
+            return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+                    && uri.getUserInfo() == null && value.length() <= 1000;
+        } catch (RuntimeException invalid) { return false; }
+    }
+
+    private static boolean safeHttpUrl(String value) {
+        try {
+            java.net.URI uri = java.net.URI.create(value);
+            String scheme = uri.getScheme();
+            return ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme))
+                    && uri.getHost() != null && uri.getUserInfo() == null;
+        } catch (RuntimeException invalid) { return false; }
     }
 
     private static String str(Map<String,Object> m, String k) {
