@@ -39,6 +39,27 @@ public class ConsultationController {
         this.auth = auth;
     }
 
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteForOwningTeacher(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable Long id
+    ) {
+        var viewer = auth.authenticate(authorization).orElse(null);
+        if (viewer == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in."));
+        if (!"TEACHER".equals(viewer.getRole())) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Only the owning teacher can delete an enquiry."));
+        ConsultationRequest request = consultationRepository.findById(id).orElse(null);
+        if (request == null) return ResponseEntity.notFound().build();
+        if (request.getTeacher().getOwnerUserId() == null || !request.getTeacher().getOwnerUserId().equals(viewer.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You can only delete enquiries sent to your own teacher profile."));
+        }
+        if (!java.util.Set.of("PENDING", "REJECTED").contains(request.getStatus())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Approved or active enquiries cannot be deleted."));
+        }
+        consultationRepository.delete(request);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping
     public ResponseEntity<?> create(
             @RequestHeader(value = "Authorization", required = false) String authorization,
