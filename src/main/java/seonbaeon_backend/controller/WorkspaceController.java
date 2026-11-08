@@ -389,10 +389,21 @@ public class WorkspaceController {
         t.setAvailable(false);
         t.setRejectionReason(reason.trim());
         t.setRejectedAt(java.time.LocalDateTime.now());
-        teachers.save(t);
-        notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
-                "Your teacher application was not approved. Reason: " + reason.trim(), "TEACHER_STATUS");
-        return ResponseEntity.ok(Map.of("message", "Teacher application rejected."));
+        Teacher saved = teachers.save(t);
+        // Rejection must succeed even if notification delivery has a separate failure.
+        try {
+            notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
+                    "Your teacher application was not approved. Reason: " + reason.trim(), "TEACHER_STATUS");
+        } catch (RuntimeException notificationError) {
+            System.err.println("Teacher rejection saved, but notification delivery failed: " + notificationError.getMessage());
+        }
+        Map<String,Object> result = new LinkedHashMap<>();
+        result.put("message", "Teacher application rejected.");
+        result.put("id", saved.getId());
+        result.put("available", saved.isAvailable());
+        result.put("rejectionReason", saved.getRejectionReason());
+        result.put("rejectedAt", saved.getRejectedAt());
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/admin/teachers/{id}/restore")
