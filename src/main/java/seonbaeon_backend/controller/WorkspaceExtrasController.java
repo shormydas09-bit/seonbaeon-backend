@@ -153,6 +153,27 @@ public class WorkspaceExtrasController {
         target.setRole(role);users.save(target);return ResponseEntity.ok(Map.of("id",target.getId(),"name",target.getName(),"email",target.getEmail(),"role",target.getRole()));
     }
 
+    @DeleteMapping("/account")
+    @Transactional
+    public ResponseEntity<?> deleteOwnAccount(@RequestHeader(value="Authorization",required=false) String h) {
+        User target=current(h);if(target==null)return noAuth();
+        if(!Set.of("TEACHER","STUDENT").contains(target.getRole()))
+            return ResponseEntity.status(403).body(Map.of("message","Only teacher and student accounts can self-delete."));
+        Long targetId=target.getId();
+        entityManager.createQuery("delete from Lesson l where l.studentUserId=:id or l.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from StudentProgressNote n where n.studentUserId=:id or n.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from TeacherAvailabilitySlot a where a.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from ConsultationRequest c where c.email=:email or c.teacher.ownerUserId=:id").setParameter("email",target.getEmail()).setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from Review r where r.reviewerUserId=:id or r.teacher.ownerUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from AuthSession s where s.user.id=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
+        teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
+        users.delete(target);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/admin/users/{id}")
     @Transactional
     public ResponseEntity<?> deleteUserAccount(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id) {
