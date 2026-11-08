@@ -108,4 +108,27 @@ class WorkspaceControllerTest {
         var full = controller.signDemoVideoUpload("Bearer teacher-token");
         assertEquals(HttpStatus.BAD_REQUEST, full.getStatusCode());
     }
+    @Test
+    void teacherProfileRejectsUnsafeUploadedDocumentAndImageUrls() {
+        java.util.Map<String,Object> body = new java.util.HashMap<>();
+        body.put("category", "Speaking");
+        body.put("specialty", "Speaking");
+        body.put("experience", "3 years");
+        body.put("qualification", "TESOL");
+        body.put("bio", "English teacher");
+        body.put("languages", "English");
+        body.put("ageRange", "Kids");
+        body.put("teachingMode", "Online");
+        body.put("availability", "Weekends");
+        body.put("hourlyRate", 20);
+        body.put("lessonDuration", 30);
+        body.put("qualificationDocumentUrl", "javascript:alert(1)");
+        assertEquals(HttpStatus.BAD_REQUEST,
+                controller.saveTeacherProfile("Bearer teacher-token", body).getStatusCode());
+        body.put("qualificationDocumentUrl", "https://cdn.example.test/certificate.pdf");
+        body.put("profileImageUrl", "data:image/svg+xml,<svg onload=alert(1)>");
+        assertEquals(HttpStatus.BAD_REQUEST,
+                controller.saveTeacherProfile("Bearer teacher-token", body).getStatusCode());
+        verify(teachers, never()).save(any());
+    }
 }
