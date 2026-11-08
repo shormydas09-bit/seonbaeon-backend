@@ -15,6 +15,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByTeacherIdAndReviewerUserId(Long teacherId, Long reviewerUserId);
     long countByTeacherId(Long teacherId);
     void deleteByTeacherId(Long teacherId);
+    void deleteByReviewerUserId(Long reviewerUserId);
 
     @Query("select avg(r.rating) from Review r where r.teacher.id = :teacherId")
     Double findAverageRatingByTeacherId(@Param("teacherId") Long teacherId);
