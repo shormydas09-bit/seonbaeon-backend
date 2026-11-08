@@ -181,6 +181,7 @@ public class Teacher {
     public void setAvailable(boolean available) { this.available = available; }
     public void setEmoji(String emoji) { this.emoji = emoji; }
 
+    @JsonIgnore
     public List<TeacherVideo> getVideos() {
         return videos;
     }
