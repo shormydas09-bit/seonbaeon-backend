@@ -28,6 +28,15 @@ class TeacherControllerAuthTest {
         User member = new User("QA Member", "qa-member@example.test", "hash");
         member.setRole("STUDENT");
         when(auth.authenticate("Bearer valid-session")).thenReturn(Optional.of(member));
+        User teacherViewer = new User("QA Teacher", "qa-teacher@example.test", "hash");
+        teacherViewer.setRole("TEACHER");
+        User adminViewer = new User("QA Admin", "qa-admin@example.test", "hash");
+        adminViewer.setRole("ADMIN");
+        User unknownViewer = new User("QA Other", "qa-other@example.test", "hash");
+        unknownViewer.setRole("GUEST");
+        when(auth.authenticate("Bearer teacher-session")).thenReturn(Optional.of(teacherViewer));
+        when(auth.authenticate("Bearer admin-session")).thenReturn(Optional.of(adminViewer));
+        when(auth.authenticate("Bearer guest-session")).thenReturn(Optional.of(unknownViewer));
         when(auth.authenticate(null)).thenReturn(Optional.empty());
         Teacher teacher = new Teacher();
         teacher.setName("QA English Teacher");
