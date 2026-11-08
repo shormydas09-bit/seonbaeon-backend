@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/workspace")
-@CrossOrigin(origins="*")
+@CrossOrigin(origins = {"https://seonbaeon-frontend.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"})
 public class WorkspaceExtrasController {
     private final AuthService auth;
     private final UserRepository users;
