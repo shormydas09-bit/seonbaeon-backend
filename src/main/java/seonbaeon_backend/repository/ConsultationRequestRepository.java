@@ -9,4 +9,5 @@ public interface ConsultationRequestRepository extends JpaRepository<Consultatio
     List<ConsultationRequest> findByEmailIgnoreCaseOrderByCreatedAtDesc(String email);
     boolean existsByTeacherIdAndEmailIgnoreCaseAndStatusIn(Long teacherId, String email, List<String> statuses);
     void deleteByTeacherId(Long teacherId);
+    void deleteByEmailIgnoreCase(String email);
 }
