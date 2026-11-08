@@ -15,7 +15,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/lessons")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"https://seonbaeon-frontend.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"})
 public class LessonController {
     private final AuthService auth;
     private final LessonRepository lessons;
