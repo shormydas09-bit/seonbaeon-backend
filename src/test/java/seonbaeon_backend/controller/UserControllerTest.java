@@ -116,10 +116,8 @@ class UserControllerTest {
         User invalid = new User("<script>alert(1)</script>", "not-an-email", "password123");
         // Email syntax validation is intentionally covered at API integration level;
         // the regression here ensures untrusted strings are never evaluated by the controller.
-        when(users.existsByEmailIgnoreCase("not-an-email")).thenReturn(false);
-        when(users.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
         var response = controller.signup(invalid);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(users).save(argThat(saved -> "<script>alert(1)</script>".equals(saved.getName())));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verifyNoInteractions(users);
     }
 }
