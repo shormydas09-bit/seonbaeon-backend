@@ -48,3 +48,15 @@ Use a staging database or a dedicated test dataset. Do not run destructive check
 - CORS does not prevent curl/Postman/server-side requests. Every private endpoint must authenticate and authorize by role and ownership.
 - Do not claim SQL injection/XSS/penetration testing passed without running dedicated tests.
 - Do not perform production account deletion or database restore tests without explicit approval and a verified backup.
+
+## Added automated regression tests (QA branch)
+- Account deletion: authenticated student cleanup, dependent-record/session cleanup, unauthenticated rejection, and admin self-delete restriction.
+- Upload/profile validation: teacher-only signing, profile-required and two-video limit, javascript:/data: URL rejection, and English-only teacher categories.
+- SQL injection/XSS input regressions: SQL-like login email is treated as a literal repository lookup; malformed signup emails and oversized consultation messages are rejected; markup is retained as JSON text, never treated as executable HTML by the API.
+- Student-to-teacher workflow: student consultation request, teacher approval, and connected-student roster visibility; rejects unapproved teachers and email spoofing.
+- CI workflow: `.github/workflows/security-regression.yml` runs the Maven test suite on QA branch pushes and pull requests.
+
+These are controller/unit regression tests, not a substitute for an external penetration test or a browser-based XSS assessment. Confirm frontend user-generated fields are rendered as React text, not `dangerouslySetInnerHTML`.
+
+## Production backup status (2026-11-09)
+The connected Render production database `pickmyteacher-db-v2` is on the Free plan and is due to expire 2026-12-04. Render Free Postgres does not provide managed backups or PITR. A documented `pg_dump` and isolated `pg_restore` procedure is in `docs/PRODUCTION_DATABASE_BACKUP_RESTORE.md`. The actual dump/restore acceptance checks remain pending because an external database connection secret and an isolated restore target are not exposed to this environment. Do not mark backup/restore as passed until the archive has been created and restored successfully.
