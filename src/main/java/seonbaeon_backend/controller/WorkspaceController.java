@@ -7,6 +7,7 @@ import seonbaeon_backend.entity.*;
 import seonbaeon_backend.repository.*;
 import seonbaeon_backend.service.AuthService;
 import seonbaeon_backend.service.NotificationService;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -28,12 +29,13 @@ public class WorkspaceController {
     private final UserRepository users;
     private final NotificationService notificationService;
     private final DashboardHiddenItemRepository hiddenItems;
+    private final ReviewRepository reviews;
 
     public WorkspaceController(AuthService auth, TeacherRepository teachers,
             TeacherVideoRepository videos, ConsultationRequestRepository consultations, UserRepository users,
-            NotificationService notificationService, DashboardHiddenItemRepository hiddenItems) {
+            NotificationService notificationService, DashboardHiddenItemRepository hiddenItems, ReviewRepository reviews) {
         this.auth = auth; this.teachers = teachers; this.videos = videos; this.consultations = consultations;
-        this.users = users; this.notificationService = notificationService; this.hiddenItems = hiddenItems;
+        this.users = users; this.notificationService = notificationService; this.hiddenItems = hiddenItems; this.reviews = reviews;
     }
 
     private User user(String authorization) {
@@ -361,6 +363,8 @@ public class WorkspaceController {
         Teacher t = teachers.findById(id).orElse(null);
         if (t == null || t.getOwnerUserId() == null) return ResponseEntity.notFound().build();
         t.setVerified(true);
+        t.setRejectionReason(null);
+        t.setRejectedAt(null);
         Teacher saved = teachers.save(t);
         notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile approved",
                 "Your English teacher profile is now approved and visible to students.", "TEACHER_STATUS");
@@ -369,18 +373,23 @@ public class WorkspaceController {
 
     @PostMapping("/admin/teachers/{id}/reject")
     public ResponseEntity<?> rejectTeacher(@RequestHeader(value="Authorization", required=false) String authorization,
-            @PathVariable Long id) {
+            @PathVariable Long id, @RequestBody(required=false) Map<String,String> body) {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
         Teacher t = teachers.findById(id).orElse(null);
-        if (t == null || t.getOwnerUserId() == null || t.isVerified()) return ResponseEntity.notFound().build();
-        // Keep the application and its videos in the database, but hide it from public listings and pending review.
+        if (t == null || t.getOwnerUserId() == null) return ResponseEntity.notFound().build();
+        if (t.isVerified()) return ResponseEntity.badRequest().body(Map.of("message", "This teacher is already approved."));
+        String reason = body == null ? null : body.get("reason");
+        if (reason == null || reason.isBlank() || reason.trim().length() > 1000)
+            return ResponseEntity.badRequest().body(Map.of("message", "A rejection reason is required (maximum 1000 characters)."));
         t.setAvailable(false);
-        Teacher saved = teachers.save(t);
+        t.setRejectionReason(reason.trim());
+        t.setRejectedAt(java.time.LocalDateTime.now());
+        teachers.save(t);
         notificationService.notifyUser(t.getOwnerUserId(), "Teacher application update",
-                "Your teacher application was not approved. Please contact support if you need clarification.", "TEACHER_STATUS");
-        return ResponseEntity.ok(saved);
+                "Your teacher application was not approved. Reason: " + reason.trim(), "TEACHER_STATUS");
+        return ResponseEntity.ok(Map.of("message", "Teacher application rejected."));
     }
 
     @PostMapping("/admin/teachers/{id}/restore")
@@ -393,6 +402,8 @@ public class WorkspaceController {
         if (t == null) return ResponseEntity.notFound().build();
         t.setAvailable(true);
         t.setVerified(true);
+        t.setRejectionReason(null);
+        t.setRejectedAt(null);
         Teacher saved = teachers.save(t);
         if (t.getOwnerUserId() != null) {
             notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile restored",
@@ -411,28 +422,43 @@ public class WorkspaceController {
             item.put("id", t.getId()); item.put("name", t.getName()); item.put("category", t.getCategory());
             item.put("location", t.getLocation()); item.put("experience", t.getExperience());
             item.put("verified", t.isVerified()); item.put("available", t.isAvailable());
+            item.put("rejectionReason", t.getRejectionReason()); item.put("rejectedAt", t.getRejectedAt());
             item.put("ownerEmail", users.findById(t.getOwnerUserId() == null ? -1L : t.getOwnerUserId()).map(User::getEmail).orElse(""));
             return item;
         }).toList());
     }
 
-    @DeleteMapping("/admin/teachers/{id}")
-    public ResponseEntity<?> removeTeacherProfile(@RequestHeader(value="Authorization", required=false) String authorization,
+    @PatchMapping("/admin/teachers/{id}/hide")
+    public ResponseEntity<?> hideTeacherProfile(@RequestHeader(value="Authorization", required=false) String authorization,
             @PathVariable Long id) {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
         Teacher t = teachers.findById(id).orElse(null);
         if (t == null) return ResponseEntity.notFound().build();
-        // Soft-delete the public profile: preserve account, lessons, consultations and review history.
         t.setAvailable(false);
-        t.setVerified(false);
         teachers.save(t);
-        if (t.getOwnerUserId() != null) {
-            notificationService.notifyUser(t.getOwnerUserId(), "Teacher profile removed",
-                    "An administrator removed your public teacher profile. Your account and lesson history remain available.", "TEACHER_STATUS");
+        return ResponseEntity.ok(Map.of("message", "Teacher profile hidden."));
+    }
+
+    @Transactional
+    @DeleteMapping("/admin/teachers/{id}")
+    public ResponseEntity<?> deleteTeacherProfilePermanently(@RequestHeader(value="Authorization", required=false) String authorization,
+            @PathVariable Long id) {
+        User u = user(authorization);
+        if (u == null) return unauthorized();
+        if (!"ADMIN".equals(u.getRole())) return forbidden();
+        Teacher t = teachers.findById(id).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
+        Long ownerId = t.getOwnerUserId();
+        consultations.deleteByTeacherId(id);
+        reviews.deleteByTeacherId(id);
+        teachers.delete(t); // Teacher videos are removed through the entity's cascade; user account and lesson snapshots remain.
+        if (ownerId != null) {
+            notificationService.notifyUser(ownerId, "Teacher profile deleted",
+                    "An administrator permanently deleted your teacher profile. Your login account and historical lesson records remain available.", "TEACHER_STATUS");
         }
-        return ResponseEntity.ok(Map.of("message", "Teacher profile removed from public listings."));
+        return ResponseEntity.ok(Map.of("message", "Teacher profile permanently deleted."));
     }
 
     @GetMapping("/admin/consultations")
