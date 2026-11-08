@@ -28,7 +28,7 @@ public class WorkspaceExtrasController {
         ConsultationRequestRepository consultations,LessonRepository lessons,ReviewRepository reviews,
         StudentProgressNoteRepository progress,TeacherAvailabilitySlotRepository availability,EntityManager entityManager) {
         this.auth=auth;this.users=users;this.teachers=teachers;this.consultations=consultations;
-        this.lessons=lessons;this.reviews=reviews;this.progress=progress;this.availability=availability;
+        this.lessons=lessons;this.reviews=reviews;this.progress=progress;this.availability=availability;this.entityManager=entityManager;
     }
     private User current(String h){return auth.authenticate(h).orElse(null);}
     private ResponseEntity<?> noAuth(){return ResponseEntity.status(401).body(Map.of("message","Please log in again."));}
