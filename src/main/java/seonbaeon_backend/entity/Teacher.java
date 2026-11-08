@@ -226,6 +226,14 @@ public class Teacher {
         this.verified = verified;
     }
 
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public void setRejectedAt(LocalDateTime rejectedAt) {
+        this.rejectedAt = rejectedAt;
+    }
+
     public void setOwnerUserId(Long ownerUserId) {
         this.ownerUserId = ownerUserId;
     }
