@@ -14,8 +14,8 @@ public class ConsultationRequest {
     @Column(nullable = false) private String studentName;
     @Column(nullable = false) private String email;
     private String phone;
-    @Column(nullable = false) private LocalDate preferredDate;
-    @Column(nullable = false) private LocalTime preferredTime;
+    @Column(nullable = true) private LocalDate preferredDate;
+    @Column(nullable = true) private LocalTime preferredTime;
     @Column(length = 2000) private String message;
     @Column(nullable = false) private String status = "PENDING";
     @Column(length=1000) private String rejectionReason;
