@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "teachers")
@@ -85,6 +86,11 @@ public class Teacher {
 
     private boolean verified = false;
 
+    @Column(length = 1000)
+    private String rejectionReason;
+
+    private LocalDateTime rejectedAt;
+
     @Column(name = "owner_user_id", unique = true)
     private Long ownerUserId;
 
@@ -159,6 +165,8 @@ public class Teacher {
     public String getTeachingMode() { return teachingMode; }
     public String getAvailability() { return availability; }
     public boolean isVerified() { return verified; }
+    public String getRejectionReason() { return rejectionReason; }
+    public LocalDateTime getRejectedAt() { return rejectedAt; }
 
     @JsonIgnore
     public Long getOwnerUserId() { return ownerUserId; }
