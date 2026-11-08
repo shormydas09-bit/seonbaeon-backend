@@ -76,6 +76,12 @@ public class ConsultationController {
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Student name and email are required."));
             }
+            if (studentName.length() > 100 || email.length() > 254
+                    || !email.matches("^[^\\\\s@]+@[^\\\\s@]+\\\\.[^\\\\s@]+$")
+                    || phone.length() > 25 || message.length() > 2000) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Please check the name, email, phone and message lengths and formats."));
+            }
 
             if (!authenticatedStudent.getEmail().equalsIgnoreCase(email)) {
                 return ResponseEntity.badRequest()
