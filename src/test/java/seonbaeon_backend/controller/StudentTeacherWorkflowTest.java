@@ -30,7 +30,8 @@ class StudentTeacherWorkflowTest {
     private Teacher teacher;
     private AtomicReference<ConsultationRequest> saved;
     private ConsultationController consultationController;
-    private WorkspaceExtrasController workspaceController;\n    private WorkspaceController teacherController;
+    private WorkspaceExtrasController workspaceController;
+    private WorkspaceController teacherController;
 
     @BeforeEach
     void setUp() {
