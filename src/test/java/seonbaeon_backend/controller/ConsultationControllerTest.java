@@ -46,7 +46,11 @@ class ConsultationControllerTest {
         teacher.setAvailable(true);
         when(auth.authenticate("Bearer student-token")).thenReturn(Optional.of(student));
         when(teachers.findById(7L)).thenReturn(Optional.of(teacher));
-        when(requests.save(any(ConsultationRequest.class))).thenAnswer(invocation -> {\n            ConsultationRequest saved = invocation.getArgument(0);\n            ReflectionTestUtils.setField(saved, "id", 123L);\n            return saved;\n        });
+        when(requests.save(any(ConsultationRequest.class))).thenAnswer(invocation -> {
+            ConsultationRequest saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 123L);
+            return saved;
+        });
     }
 
     @Test
