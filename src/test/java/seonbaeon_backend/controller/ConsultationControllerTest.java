@@ -100,4 +100,27 @@ class ConsultationControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, malformed.getStatusCode());
         verify(requests, never()).save(any());
     }
+    @Test
+    void markupInConsultationMessageIsHandledAsPlainJsonData() {
+        String markup = "<img src=x onerror=alert(1)>";
+        var response = controller.create("Bearer student-token",
+                Map.of("teacherId", 7, "studentName", "Student",
+                        "email", "student@example.com", "message", markup));
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        verify(requests).save(argThat(request -> markup.equals(request.getMessage())));
+        // The API returns JSON data; UI rendering must use normal React text interpolation,
+        // never dangerouslySetInnerHTML for user-controlled profile or message fields.
+    }
+
+    @Test
+    void consultationRejectsOversizedAndMalformedEmailInputs() {
+        var oversized = controller.create("Bearer student-token",
+                Map.of("teacherId", 7, "studentName", "Student", "email", "student@example.com",
+                        "message", "x".repeat(2001)));
+        var malformed = controller.create("Bearer student-token",
+                Map.of("teacherId", 7, "studentName", "Student", "email", "not-an-email"));
+        assertEquals(HttpStatus.BAD_REQUEST, oversized.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, malformed.getStatusCode());
+        verify(requests, never()).save(any());
+    }
 }
