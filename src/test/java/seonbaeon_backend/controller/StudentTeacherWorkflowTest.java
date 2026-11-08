@@ -30,7 +30,7 @@ class StudentTeacherWorkflowTest {
     private Teacher teacher;
     private AtomicReference<ConsultationRequest> saved;
     private ConsultationController consultationController;
-    private WorkspaceExtrasController workspaceController;
+    private WorkspaceExtrasController workspaceController;\n    private WorkspaceController teacherController;
 
     @BeforeEach
     void setUp() {
@@ -71,6 +71,8 @@ class StudentTeacherWorkflowTest {
                 mock(LessonRepository.class), mock(ReviewRepository.class),
                 mock(StudentProgressNoteRepository.class), mock(TeacherAvailabilitySlotRepository.class),
                 mock(jakarta.persistence.EntityManager.class));
+        teacherController = new WorkspaceController(auth, teachers, mock(TeacherVideoRepository.class),
+                requests, users, notifications, mock(DashboardHiddenItemRepository.class), mock(ReviewRepository.class));
     }
 
     @Test
@@ -81,7 +83,7 @@ class StudentTeacherWorkflowTest {
         assertEquals(HttpStatus.CREATED, submitted.getStatusCode());
         assertEquals("PENDING", saved.get().getStatus());
 
-        var approved = workspaceController.updateTeacherConsultation("Bearer teacher-qa", 404L,
+        var approved = teacherController.updateTeacherConsultation("Bearer teacher-qa", 404L,
                 Map.of("status", "APPROVED"));
         assertEquals(HttpStatus.OK, approved.getStatusCode());
         assertEquals("APPROVED", saved.get().getStatus());
