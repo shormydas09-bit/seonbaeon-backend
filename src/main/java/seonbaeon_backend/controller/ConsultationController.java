@@ -72,9 +72,9 @@ public class ConsultationController {
             String time = String.valueOf(body.getOrDefault("preferredTime", ""));
             String message = String.valueOf(body.getOrDefault("message", "")).trim();
 
-            if (studentName.isBlank() || email.isBlank() || date.isBlank() || time.isBlank()) {
+            if (studentName.isBlank() || email.isBlank()) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("message", "Name, email, preferred date and preferred time are required."));
+                        .body(Map.of("message", "Student name and email are required."));
             }
 
             if (!authenticatedStudent.getEmail().equalsIgnoreCase(email)) {
@@ -86,12 +86,16 @@ public class ConsultationController {
             request.setStudentName(studentName);
             request.setEmail(email);
             request.setPhone(phone);
-            java.time.LocalDate preferredDate = java.time.LocalDate.parse(date);
-            if (preferredDate.isBefore(java.time.LocalDate.now())) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Choose today or a future date for your consultation."));
+            if (!date.isBlank()) {
+                java.time.LocalDate preferredDate = java.time.LocalDate.parse(date);
+                if (preferredDate.isBefore(java.time.LocalDate.now())) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Choose today or a future date for your consultation."));
+                }
+                request.setPreferredDate(preferredDate);
             }
-            request.setPreferredDate(preferredDate);
-            request.setPreferredTime(java.time.LocalTime.parse(time));
+            if (!time.isBlank()) {
+                request.setPreferredTime(java.time.LocalTime.parse(time));
+            }
             request.setMessage(message);
             request.setStatus("PENDING");
 
