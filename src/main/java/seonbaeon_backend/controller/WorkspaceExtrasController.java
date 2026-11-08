@@ -163,8 +163,13 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from Lesson l where l.studentUserId=:id or l.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from StudentProgressNote n where n.studentUserId=:id or n.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from TeacherAvailabilitySlot a where a.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
-        entityManager.createQuery("delete from ConsultationRequest c where c.email=:email or c.teacher.ownerUserId=:id").setParameter("email",target.getEmail()).setParameter("id",targetId).executeUpdate();
-        entityManager.createQuery("delete from Review r where r.reviewerUserId=:id or r.teacher.ownerUserId=:id").setParameter("id",targetId).executeUpdate();
+        Teacher ownedTeacher=teachers.findByOwnerUserId(targetId).orElse(null);
+        consultations.deleteByEmailIgnoreCase(target.getEmail());
+        reviews.deleteByReviewerUserId(targetId);
+        if(ownedTeacher!=null) {
+            consultations.deleteByTeacherId(ownedTeacher.getId());
+            reviews.deleteByTeacherId(ownedTeacher.getId());
+        }
         entityManager.createQuery("delete from AuthSession s where s.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
@@ -186,8 +191,13 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from Lesson l where l.studentUserId=:id or l.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from StudentProgressNote n where n.studentUserId=:id or n.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from TeacherAvailabilitySlot a where a.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
-        entityManager.createQuery("delete from ConsultationRequest c where c.email=:email or c.teacher.ownerUserId=:id").setParameter("email",target.getEmail()).setParameter("id",targetId).executeUpdate();
-        entityManager.createQuery("delete from Review r where r.reviewerUserId=:id").setParameter("id",targetId).executeUpdate();
+        Teacher ownedTeacher=teachers.findByOwnerUserId(targetId).orElse(null);
+        consultations.deleteByEmailIgnoreCase(target.getEmail());
+        reviews.deleteByReviewerUserId(targetId);
+        if(ownedTeacher!=null) {
+            consultations.deleteByTeacherId(ownedTeacher.getId());
+            reviews.deleteByTeacherId(ownedTeacher.getId());
+        }
         entityManager.createQuery("delete from AuthSession s where s.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
