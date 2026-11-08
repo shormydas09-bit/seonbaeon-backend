@@ -99,4 +99,25 @@ class UserControllerTest {
         assertTrue(response.getBody().toString().contains("If an account exists"));
         verify(passwordReset).createResetRequest("unknown@example.com");
     }
+    @Test
+    void loginTreatsSqlInjectionPayloadAsLiteralEmail() {
+        String payload = "' OR '1'='1' --";
+        when(users.findByEmailIgnoreCase(payload)).thenReturn(Optional.empty());
+        User request = new User();
+        request.setEmail(payload);
+        request.setPassword("anything");
+        assertEquals(HttpStatus.UNAUTHORIZED, controller.login(request).getStatusCode());
+        verify(users).findByEmailIgnoreCase(payload);
+        verifyNoInteractions(auth);
+    }
+
+    @Test
+    void signupDoesNotPersistMarkupAsAnAccountNameWhenRequiredValidationFails() {
+        User invalid = new User("<script>alert(1)</script>", "not-an-email", "password123");
+        // Email syntax validation is intentionally covered at API integration level;
+        // the regression here ensures untrusted strings are never evaluated by the controller.
+        var response = controller.signup(invalid);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verifyNoInteractions(users);
+    }
 }

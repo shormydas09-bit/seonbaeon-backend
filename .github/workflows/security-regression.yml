@@ -1,0 +1,26 @@
+name: Security and Workflow Regression
+on:
+  push:
+    branches: [main, "qa/**"]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run backend regression suite
+        run: mvn -B -DskipTests=false test
+      - name: Verify production artifacts are not included
+        run: |
+          if find . -type f \( -name '*.dump' -o -name '*.sql.gz' -o -name '*.backup' \) | grep -q .; then
+            echo "Unexpected database backup artifact found in source tree"
+            exit 1
+          fi
