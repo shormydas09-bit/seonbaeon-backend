@@ -23,7 +23,7 @@ public class LegacyProgressCleanup {
         );
         if (applied != null && applied > 0) return;
 
-        jdbc.update("DELETE FROM student_progress_notes");
+        jdbc.update("DELETE FROM student_progress_notes WHERE id IN (1, 2) AND teacher_user_id = 5 AND student_user_id = 4");
         jdbc.update(
             "INSERT INTO app_data_migrations (migration_key) VALUES (?)",
             "2026-11-remove-demo-progress-notes"
