@@ -6,6 +6,7 @@ import seonbaeon_backend.entity.Teacher;
 import seonbaeon_backend.entity.TeacherVideo;
 import seonbaeon_backend.repository.TeacherRepository;
 import seonbaeon_backend.repository.TeacherVideoRepository;
+import seonbaeon_backend.service.AuthService;
 
 import java.util.List;
 import java.util.Set;
@@ -27,26 +28,31 @@ public class TeacherController {
 
     private final TeacherRepository teacherRepository;
     private final TeacherVideoRepository teacherVideoRepository;
+    private final AuthService authService;
 
     public TeacherController(
             TeacherRepository teacherRepository,
-            TeacherVideoRepository teacherVideoRepository
+            TeacherVideoRepository teacherVideoRepository,
+            AuthService authService
     ) {
         this.teacherRepository = teacherRepository;
         this.teacherVideoRepository = teacherVideoRepository;
+        this.authService = authService;
     }
 
     @GetMapping
-    public List<Teacher> getTeachers() {
-        return teacherRepository.findAll().stream()
+    public ResponseEntity<List<Teacher>> getTeachers(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
+        return ResponseEntity.ok(teacherRepository.findAll().stream()
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
                 .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
-                .toList();
+                .toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Teacher> getTeacher(@PathVariable Long id) {
+    public ResponseEntity<Teacher> getTeacher(@PathVariable Long id, @RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
         return teacherRepository.findById(id)
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
@@ -57,8 +63,10 @@ public class TeacherController {
 
     @GetMapping("/{teacherId}/videos")
     public ResponseEntity<List<TeacherVideo>> getTeacherVideos(
-            @PathVariable Long teacherId
+            @PathVariable Long teacherId,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
+        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
         return teacherRepository.findById(teacherId)
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
