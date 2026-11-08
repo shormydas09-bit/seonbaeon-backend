@@ -39,16 +39,39 @@ public class WorkspaceExtrasController {
                 Set.of("APPROVED","COMPLETED").contains(c.getStatus()));
     }
 
+    private List<Map<String,Object>> connectedStudentsFor(Long teacherUserId) {
+        Map<Long,Map<String,Object>> linkedStudents=new LinkedHashMap<>();
+        for(ConsultationRequest c:consultations.findByTeacherOwnerUserId(teacherUserId)) {
+            String status=c.getStatus()==null?"":c.getStatus().toUpperCase(Locale.ROOT);
+            if(!Set.of("APPROVED","COMPLETED").contains(status)) continue;
+            users.findByEmailIgnoreCase(c.getEmail()).filter(student -> "STUDENT".equals(student.getRole()))
+                .ifPresent(student -> {
+                    Map<String,Object> item=linkedStudents.computeIfAbsent(student.getId(),id -> {
+                        Map<String,Object> value=new LinkedHashMap<>();
+                        value.put("id",student.getId());value.put("name",student.getName());value.put("email",student.getEmail());
+                        value.put("hasActiveConnection",false);value.put("hasCompletedConnection",false);
+                        value.put("lastActivity",c.getCreatedAt());
+                        return value;
+                    });
+                    if("APPROVED".equals(status)) item.put("hasActiveConnection",true);
+                    if("COMPLETED".equals(status)) item.put("hasCompletedConnection",true);
+                    if(c.getCreatedAt()!=null && (item.get("lastActivity")==null ||
+                        c.getCreatedAt().isAfter((LocalDateTime)item.get("lastActivity")))) item.put("lastActivity",c.getCreatedAt());
+                });
+        }
+        for(Map<String,Object> item:linkedStudents.values()) {
+            boolean active=Boolean.TRUE.equals(item.get("hasActiveConnection"));
+            item.put("status",active?"ACTIVE":"COMPLETED");
+            item.put("statusLabel",active?"Active student":"Completed student");
+            item.remove("hasActiveConnection");item.remove("hasCompletedConnection");
+        }
+        return new ArrayList<>(linkedStudents.values());
+    }
+
     @GetMapping("/teacher/students")
     public ResponseEntity<?> teacherStudents(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h); if(u==null)return noAuth(); if(!"TEACHER".equals(u.getRole()))return forbidden();
-        Map<Long,Map<String,Object>> linkedStudents=new LinkedHashMap<>();
-        for(ConsultationRequest c:consultations.findByTeacherOwnerUserId(u.getId())) {
-            if(!Set.of("APPROVED","COMPLETED").contains(c.getStatus())) continue;
-            users.findByEmailIgnoreCase(c.getEmail()).filter(student -> "STUDENT".equals(student.getRole()))
-                .ifPresent(student -> linkedStudents.put(student.getId(),Map.of("id",student.getId(),"name",student.getName(),"email",student.getEmail())));
-        }
-        return ResponseEntity.ok(new ArrayList<>(linkedStudents.values()));
+        return ResponseEntity.ok(connectedStudentsFor(u.getId()));
     }
 
     // Teacher notes are private to the teacher and the linked student.
@@ -164,11 +187,18 @@ public class WorkspaceExtrasController {
     @GetMapping("/teacher/analytics")
     public ResponseEntity<?> teacherAnalytics(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"TEACHER".equals(u.getRole()))return forbidden();
-        Teacher t=teachers.findByOwnerUserId(u.getId()).orElse(null);if(t==null)return ResponseEntity.ok(Map.of("consultations",0,"lessons",0,"completedLessons",0,"reviews",0,"averageRating",0));
+        Teacher t=teachers.findByOwnerUserId(u.getId()).orElse(null);
         var own=consultations.findByTeacherOwnerUserId(u.getId());var teacherLessons=lessons.findByTeacherUserIdOrderByScheduledAtDesc(u.getId());
-        return ResponseEntity.ok(Map.of("consultations",own.size(),"pendingConsultations",own.stream().filter(x->"PENDING".equals(x.getStatus())).count(),
-            "lessons",teacherLessons.size(),"completedLessons",teacherLessons.stream().filter(x->"COMPLETED".equals(x.getStatus())).count(),
-            "reviews",reviews.countByTeacherId(t.getId()),"averageRating",t.getRating(),"students",own.stream().map(x->x.getEmail().toLowerCase(Locale.ROOT)).distinct().count()));
+        List<Map<String,Object>> connected=connectedStudentsFor(u.getId());
+        long activeStudents=connected.stream().filter(x->"ACTIVE".equals(x.get("status"))).count();
+        long completedStudents=connected.stream().filter(x->"COMPLETED".equals(x.get("status"))).count();
+        Map<String,Object> result=new LinkedHashMap<>();
+        result.put("consultations",own.size());result.put("pendingConsultations",own.stream().filter(x->"PENDING".equals(x.getStatus())).count());
+        result.put("lessons",teacherLessons.size());result.put("completedLessons",teacherLessons.stream().filter(x->"COMPLETED".equals(x.getStatus())).count());
+        result.put("reviews",t==null?0:reviews.countByTeacherId(t.getId()));result.put("averageRating",t==null?0:t.getRating());
+        result.put("students",connected.size());result.put("totalConnectedStudents",connected.size());
+        result.put("activeStudents",activeStudents);result.put("completedStudents",completedStudents);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/admin/activity")
