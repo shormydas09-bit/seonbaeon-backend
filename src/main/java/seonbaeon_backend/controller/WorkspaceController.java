@@ -170,6 +170,9 @@ public class WorkspaceController {
         // merely because an approved teacher updates ordinary profile information.
         t.setAvailable(true);
         t.setVerified(wasVerified);
+        // A rejected application edited and resubmitted by its owner returns to the review queue.
+        t.setRejectionReason(null);
+        t.setRejectedAt(null);
         t.setEmoji("👩‍🏫");
         return ResponseEntity.ok(teachers.save(t));
     }
