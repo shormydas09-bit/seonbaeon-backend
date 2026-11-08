@@ -1,6 +1,8 @@
 package seonbaeon_backend.controller;
 
 import org.springframework.http.*;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.*;
 import seonbaeon_backend.repository.*;
@@ -20,10 +22,11 @@ public class WorkspaceExtrasController {
     private final ReviewRepository reviews;
     private final StudentProgressNoteRepository progress;
     private final TeacherAvailabilitySlotRepository availability;
+    private final EntityManager entityManager;
 
     public WorkspaceExtrasController(AuthService auth,UserRepository users,TeacherRepository teachers,
         ConsultationRequestRepository consultations,LessonRepository lessons,ReviewRepository reviews,
-        StudentProgressNoteRepository progress,TeacherAvailabilitySlotRepository availability) {
+        StudentProgressNoteRepository progress,TeacherAvailabilitySlotRepository availability,EntityManager entityManager) {
         this.auth=auth;this.users=users;this.teachers=teachers;this.consultations=consultations;
         this.lessons=lessons;this.reviews=reviews;this.progress=progress;this.availability=availability;
     }
@@ -148,6 +151,29 @@ public class WorkspaceExtrasController {
         if(!Set.of("STUDENT","TEACHER","ADMIN").contains(role)||Objects.equals(target.getId(),admin.getId()))
             return ResponseEntity.badRequest().body(Map.of("message","Choose a valid role. You cannot change your own role."));
         target.setRole(role);users.save(target);return ResponseEntity.ok(Map.of("id",target.getId(),"name",target.getName(),"email",target.getEmail(),"role",target.getRole()));
+    }
+
+    @DeleteMapping("/admin/users/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteUserAccount(@RequestHeader(value="Authorization",required=false) String h,@PathVariable Long id) {
+        User admin=current(h);if(admin==null)return noAuth();if(!"ADMIN".equals(admin.getRole()))return forbidden();
+        User target=users.findById(id).orElse(null);if(target==null)return ResponseEntity.notFound().build();
+        if("ADMIN".equalsIgnoreCase(target.getRole())||Objects.equals(target.getId(),admin.getId()))
+            return ResponseEntity.badRequest().body(Map.of("message","Admin accounts cannot be deleted from User Management."));
+        Long targetId=target.getId();
+        // Remove dependent records first so account deletion cannot leave broken references.
+        entityManager.createQuery("delete from Lesson l where l.studentUserId=:id or l.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from StudentProgressNote n where n.studentUserId=:id or n.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from TeacherAvailabilitySlot a where a.teacherUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from ConsultationRequest c where c.email=:email or c.teacher.ownerUserId=:id").setParameter("email",target.getEmail()).setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from Review r where r.reviewerUserId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from AuthSession s where s.user.id=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
+        entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
+        teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
+        users.delete(target);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/admin/users/{id}/status")
