@@ -175,7 +175,11 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
         teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
-        users.delete(target);
+        // Bulk JPQL deletes bypass the persistence context. Clear managed AuthSession/User
+        // references before deleting the account to avoid Hibernate flushing stale sessions.
+        entityManager.flush();
+        entityManager.clear();
+        users.deleteById(targetId);
         return ResponseEntity.noContent().build();
     }
 
@@ -203,7 +207,11 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
         teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
-        users.delete(target);
+        // Bulk JPQL deletes bypass the persistence context. Clear managed AuthSession/User
+        // references before deleting the account to avoid Hibernate flushing stale sessions.
+        entityManager.flush();
+        entityManager.clear();
+        users.deleteById(targetId);
         return ResponseEntity.noContent().build();
     }
 
