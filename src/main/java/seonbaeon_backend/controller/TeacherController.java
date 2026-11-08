@@ -26,6 +26,14 @@ public class TeacherController {
             "School English"
     );
 
+    private static final Set<String> ALLOWED_VIEWER_ROLES = Set.of("STUDENT", "TEACHER", "ADMIN");
+
+    private boolean canViewTeachers(String authorization) {
+        return authService.authenticate(authorization)
+                .map(user -> ALLOWED_VIEWER_ROLES.contains(user.getRole()))
+                .orElse(false);
+    }
+
     private final TeacherRepository teacherRepository;
     private final TeacherVideoRepository teacherVideoRepository;
     private final AuthService authService;
@@ -42,7 +50,7 @@ public class TeacherController {
 
     @GetMapping
     public ResponseEntity<List<Teacher>> getTeachers(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
+        if (!canViewTeachers(authorization)) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(teacherRepository.findAll().stream()
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
@@ -52,7 +60,7 @@ public class TeacherController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Teacher> getTeacher(@PathVariable Long id, @RequestHeader(value = "Authorization", required = false) String authorization) {
-        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
+        if (!canViewTeachers(authorization)) return ResponseEntity.status(401).build();
         return teacherRepository.findById(id)
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
@@ -66,7 +74,7 @@ public class TeacherController {
             @PathVariable Long teacherId,
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
+        if (!canViewTeachers(authorization)) return ResponseEntity.status(401).build();
         return teacherRepository.findById(teacherId)
                 .filter(Teacher::isAvailable)
                 .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
