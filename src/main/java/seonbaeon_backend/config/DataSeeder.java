@@ -243,6 +243,14 @@ public class DataSeeder {
         for (Teacher teacher : teachers) {
             boolean changed = false;
 
+            if ("Minji Park".equals(teacher.getName())) {
+                String portrait = "https://api.dicebear.com/9.x/lorelei/svg?seed=Minji-Park&backgroundColor=f1e8df";
+                if (!portrait.equals(teacher.getProfileImageUrl())) {
+                    teacher.setProfileImageUrl(portrait);
+                    changed = true;
+                }
+            }
+
             String qualification = teacher.getQualification();
 
             if (qualification != null) {
