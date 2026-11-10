@@ -154,7 +154,7 @@ public class DataSeeder {
 
                 jisoo.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Jisoo-Kim");
                 hana.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Hana-Jung");
-                minji.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Minji-Park");
+                minji.setProfileImageUrl("https://api.dicebear.com/9.x/lorelei/svg?seed=Minji-Park&backgroundColor=f1e8df");
                 daniel.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Daniel-Choi");
                 sora.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Sora-Lee");
                 yuna.setProfileImageUrl("https://api.dicebear.com/9.x/personas/svg?seed=Yuna-Choi");
@@ -233,54 +233,7 @@ public class DataSeeder {
             }
 
             teacherRepository.saveAll(teachersNeedingImages);
-            /*
-             * Ensure every teacher has at least two demo videos.
-             *
-             * IMPORTANT:
-             * Existing video records are never deleted.
-             * If a teacher already has one video, only one more is added.
-             * If a teacher already has two or more, nothing is changed.
-             */
-            List<Teacher> teachers = teacherRepository.findAll();
 
-            for (Teacher teacher : teachers) {
-
-                List<TeacherVideo> existingVideos =
-                        teacherVideoRepository.findByTeacherId(teacher.getId());
-
-                int existingCount = existingVideos.size();
-
-                if (existingCount >= 2) {
-                    continue;
-                }
-
-                List<TeacherVideo> videosToAdd = new java.util.ArrayList<>();
-
-                if (existingCount == 0) {
-                    videosToAdd.add(createDemoVideo(
-                            teacher,
-                            "Lesson Introduction",
-                            "A sample English lesson showing the teacher's teaching approach.",
-                            DEMO_VIDEO_1
-                    ));
-
-                    videosToAdd.add(createDemoVideo(
-                            teacher,
-                            "Teaching Approach Demo",
-                            "A second sample English lesson for families to understand the teaching style.",
-                            DEMO_VIDEO_2
-                    ));
-                } else {
-                    videosToAdd.add(createDemoVideo(
-                            teacher,
-                            "Teaching Approach Demo",
-                            "A sample English lesson for families to understand the teaching style.",
-                            DEMO_VIDEO_2
-                    ));
-                }
-
-                teacherVideoRepository.saveAll(videosToAdd);
-            }
         };
     }
 
