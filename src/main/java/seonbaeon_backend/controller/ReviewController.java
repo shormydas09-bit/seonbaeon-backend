@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import seonbaeon_backend.entity.Review;
 import seonbaeon_backend.entity.Teacher;
 import seonbaeon_backend.entity.User;
-import seonbaeon_backend.repository.ConsultationRequestRepository;
 import seonbaeon_backend.repository.ReviewRepository;
 import seonbaeon_backend.repository.TeacherRepository;
 import seonbaeon_backend.service.AuthService;
@@ -21,18 +20,15 @@ public class ReviewController {
 
     private final ReviewRepository reviewRepository;
     private final TeacherRepository teacherRepository;
-    private final ConsultationRequestRepository consultationRepository;
     private final AuthService authService;
 
     public ReviewController(
             ReviewRepository reviewRepository,
             TeacherRepository teacherRepository,
-            ConsultationRequestRepository consultationRepository,
             AuthService authService
     ) {
         this.reviewRepository = reviewRepository;
         this.teacherRepository = teacherRepository;
-        this.consultationRepository = consultationRepository;
         this.authService = authService;
     }
 
@@ -56,15 +52,11 @@ public class ReviewController {
             return ResponseEntity.notFound().build();
         }
 
-        boolean eligible = consultationRepository
-                .existsByTeacherIdAndEmailIgnoreCaseAndStatusIn(
-                        teacherId, student.getEmail(), List.of("COMPLETED"));
-
         boolean alreadyReviewed = reviewRepository
                 .existsByTeacherIdAndReviewerUserId(teacherId, student.getId());
 
         return ResponseEntity.ok(Map.of(
-                "eligible", eligible,
+                "eligible", true,
                 "alreadyReviewed", alreadyReviewed
         ));
     }
@@ -108,14 +100,6 @@ public class ReviewController {
         Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
         if (teacher == null) {
             return ResponseEntity.notFound().build();
-        }
-
-        boolean eligible = consultationRepository
-                .existsByTeacherIdAndEmailIgnoreCaseAndStatusIn(
-                        teacherId, student.getEmail(), List.of("COMPLETED"));
-        if (!eligible) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You can review this teacher after completing a lesson with them."));
         }
 
         if (reviewRepository.existsByTeacherIdAndReviewerUserId(teacherId, student.getId())) {
