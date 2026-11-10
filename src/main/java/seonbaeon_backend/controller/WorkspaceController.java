@@ -101,30 +101,13 @@ public class WorkspaceController {
         return ResponseEntity.ok(consultations.findByEmailIgnoreCaseOrderByCreatedAtDesc(u.getEmail()).stream().filter(c -> !hidden.contains(c.getId())).map(this::consultationData).toList());
     }
 
-    /**
-     * Repairs legacy teacher records created before owner_user_id was populated.
-     * Only an exact, unique, unclaimed name match is eligible. Starter demo
-     * profiles are explicitly excluded so they can never be claimed by a user.
-     */
-    private Teacher teacherFor(User u) {
-        Teacher linked = teachers.findByOwnerUserId(u.getId()).orElse(null);
-        if (linked != null) return linked;
-        Set<String> starterNames = Set.of("Jisoo Kim", "Hana Jung", "Minji Park", "Daniel Choi", "Sora Lee", "Yuna Choi");
-        if (u.getName() == null || starterNames.contains(u.getName().trim())) return null;
-        List<Teacher> candidates = teachers.findByNameIgnoreCaseAndOwnerUserIdIsNull(u.getName().trim());
-        if (candidates.size() != 1) return null;
-        Teacher legacy = candidates.get(0);
-        legacy.setOwnerUserId(u.getId());
-        return teachers.save(legacy);
-    }
-
     @GetMapping("/teacher/profile")
     public ResponseEntity<?> myTeacherProfile(@RequestHeader(value="Authorization", required=false) String authorization) {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"TEACHER".equals(u.getRole())) return forbidden();
-        Teacher teacher = teacherFor(u);
-        return teacher == null ? ResponseEntity.ok(Map.of("profile", "NOT_CREATED")) : ResponseEntity.ok(teacher);
+        return teachers.findByOwnerUserId(u.getId()).<ResponseEntity<?>>map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.ok(Map.of("profile", "NOT_CREATED")));
     }
 
     @PutMapping("/teacher/profile")
@@ -164,8 +147,7 @@ public class WorkspaceController {
                 || (profileImageUrl != null && !profileImageUrl.isBlank() && !safeHttpsUrl(profileImageUrl))) {
             return ResponseEntity.badRequest().body(Map.of("message", "Uploaded document and profile image must use a valid HTTPS URL."));
         }
-        Teacher existing = teacherFor(u);
-        Teacher t = existing == null ? new Teacher() : existing;
+        Teacher t = teachers.findByOwnerUserId(u.getId()).orElseGet(Teacher::new);
         // Preserve admin approval when an already-approved teacher edits profile details.
         // New or previously unapproved applications remain unverified until admin review.
         boolean wasVerified = t.isVerified();
@@ -306,7 +288,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"TEACHER".equals(u.getRole())) return forbidden();
-        Teacher t = teacherFor(u);
+        Teacher t = teachers.findByOwnerUserId(u.getId()).orElse(null);
         return ResponseEntity.ok(t == null ? List.of() : videos.findByTeacherId(t.getId()));
     }
 
@@ -317,7 +299,7 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"TEACHER".equals(u.getRole())) return forbidden();
-        Teacher t = teacherFor(u);
+        Teacher t = teachers.findByOwnerUserId(u.getId()).orElse(null);
         if (t == null) return ResponseEntity.notFound().build();
         TeacherVideo video = videos.findById(id).orElse(null);
         if (video == null || video.getTeacher() == null
