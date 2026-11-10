@@ -174,6 +174,10 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
+        if(ownedTeacher!=null) {
+            entityManager.createQuery("delete from TeacherVideo v where v.teacher.id=:teacherId")
+                .setParameter("teacherId",ownedTeacher.getId()).executeUpdate();
+        }
         teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
         // Bulk JPQL deletes bypass the persistence context. Clear managed AuthSession/User
         // references before deleting the account to avoid Hibernate flushing stale sessions.
@@ -206,6 +210,10 @@ public class WorkspaceExtrasController {
         entityManager.createQuery("delete from PasswordResetToken p where p.user.id=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from DashboardHiddenItem d where d.userId=:id").setParameter("id",targetId).executeUpdate();
         entityManager.createQuery("delete from UserNotification n where n.recipientUserId=:id").setParameter("id",targetId).executeUpdate();
+        if(ownedTeacher!=null) {
+            entityManager.createQuery("delete from TeacherVideo v where v.teacher.id=:teacherId")
+                .setParameter("teacherId",ownedTeacher.getId()).executeUpdate();
+        }
         teachers.findByOwnerUserId(targetId).ifPresent(teachers::delete);
         // Bulk JPQL deletes bypass the persistence context. Clear managed AuthSession/User
         // references before deleting the account to avoid Hibernate flushing stale sessions.
