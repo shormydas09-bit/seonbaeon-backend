@@ -10,4 +10,5 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findByTeacherUserIdOrderByScheduledAtDesc(Long teacherUserId);
     Optional<Lesson> findByConsultationId(Long consultationId);
     boolean existsByConsultationId(Long consultationId);
+    long countByStatus(String status);
 }
