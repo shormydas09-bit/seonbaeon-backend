@@ -43,11 +43,7 @@ public class TeacherController {
     @GetMapping
     public ResponseEntity<List<Teacher>> getTeachers(@RequestHeader(value = "Authorization", required = false) String authorization) {
         if (authService.authenticate(authorization).isEmpty()) return ResponseEntity.status(401).build();
-        return ResponseEntity.ok(teacherRepository.findAll().stream()
-                .filter(Teacher::isAvailable)
-                .filter(teacher -> ENGLISH_CATEGORIES.contains(teacher.getCategory()))
-                .filter(teacher -> teacher.getOwnerUserId() == null || teacher.isVerified())
-                .toList());
+        return ResponseEntity.ok(teacherRepository.findPublicAvailableTeachersByCategories(List.copyOf(ENGLISH_CATEGORIES)));
     }
 
     @GetMapping("/{id}")
