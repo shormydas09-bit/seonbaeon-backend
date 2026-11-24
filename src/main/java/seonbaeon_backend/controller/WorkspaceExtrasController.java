@@ -288,11 +288,10 @@ public class WorkspaceExtrasController {
     @GetMapping("/admin/overview")
     public ResponseEntity<?> adminOverview(@RequestHeader(value="Authorization",required=false) String h) {
         User u=current(h);if(u==null)return noAuth();if(!"ADMIN".equals(u.getRole()))return forbidden();
-        var allUsers=users.findAll();var allConsultations=consultations.findAll();var allLessons=lessons.findAll();
-        return ResponseEntity.ok(Map.of("users",allUsers.size(),"students",allUsers.stream().filter(x->"STUDENT".equals(x.getRole())).count(),
-            "teachers",allUsers.stream().filter(x->"TEACHER".equals(x.getRole())).count(),"teacherProfiles",teachers.count(),
-            "consultations",allConsultations.size(),"pendingConsultations",allConsultations.stream().filter(x->"PENDING".equals(x.getStatus())).count(),
-            "lessons",allLessons.size(),"completedLessons",allLessons.stream().filter(x->"COMPLETED".equals(x.getStatus())).count(),
+        return ResponseEntity.ok(Map.of("users",users.count(),"students",users.countByRole("STUDENT"),
+            "teachers",users.countByRole("TEACHER"),"teacherProfiles",teachers.count(),
+            "consultations",consultations.count(),"pendingConsultations",consultations.countByStatus("PENDING"),
+            "lessons",lessons.count(),"completedLessons",lessons.countByStatus("COMPLETED"),
             "reviews",reviews.count()));
     }
 }
