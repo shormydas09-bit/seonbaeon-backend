@@ -43,24 +43,31 @@ public class WorkspaceExtrasController {
     }
 
     private List<Map<String,Object>> connectedStudentsFor(Long teacherUserId) {
+        List<ConsultationRequest> connections=consultations.findByTeacherOwnerUserId(teacherUserId).stream()
+            .filter(c -> Set.of("APPROVED","COMPLETED").contains(
+                c.getStatus()==null?"":c.getStatus().toUpperCase(Locale.ROOT)))
+            .toList();
+        Set<String> emails=connections.stream().map(ConsultationRequest::getEmail)
+            .filter(Objects::nonNull).map(e->e.toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toSet());
+        Map<String,User> studentsByEmail=users.findByEmailIgnoreCaseIn(emails).stream()
+            .filter(student -> "STUDENT".equals(student.getRole()))
+            .collect(java.util.stream.Collectors.toMap(e->e.getEmail().toLowerCase(Locale.ROOT),e->e,(a1,b1)->a1));
         Map<Long,Map<String,Object>> linkedStudents=new LinkedHashMap<>();
-        for(ConsultationRequest c:consultations.findByTeacherOwnerUserId(teacherUserId)) {
-            String status=c.getStatus()==null?"":c.getStatus().toUpperCase(Locale.ROOT);
-            if(!Set.of("APPROVED","COMPLETED").contains(status)) continue;
-            users.findByEmailIgnoreCase(c.getEmail()).filter(student -> "STUDENT".equals(student.getRole()))
-                .ifPresent(student -> {
-                    Map<String,Object> item=linkedStudents.computeIfAbsent(student.getId(),id -> {
-                        Map<String,Object> value=new LinkedHashMap<>();
-                        value.put("id",student.getId());value.put("name",student.getName());value.put("email",student.getEmail());
-                        value.put("hasActiveConnection",false);value.put("hasCompletedConnection",false);
-                        value.put("lastActivity",c.getCreatedAt());
-                        return value;
-                    });
-                    if("APPROVED".equals(status)) item.put("hasActiveConnection",true);
-                    if("COMPLETED".equals(status)) item.put("hasCompletedConnection",true);
-                    if(c.getCreatedAt()!=null && (item.get("lastActivity")==null ||
-                        c.getCreatedAt().isAfter((LocalDateTime)item.get("lastActivity")))) item.put("lastActivity",c.getCreatedAt());
-                });
+        for(ConsultationRequest c:connections) {
+            User student=c.getEmail()==null?null:studentsByEmail.get(c.getEmail().toLowerCase(Locale.ROOT));
+            if(student==null) continue;
+            String status=c.getStatus().toUpperCase(Locale.ROOT);
+            Map<String,Object> item=linkedStudents.computeIfAbsent(student.getId(),id -> {
+                Map<String,Object> value=new LinkedHashMap<>();
+                value.put("id",student.getId());value.put("name",student.getName());value.put("email",student.getEmail());
+                value.put("hasActiveConnection",false);value.put("hasCompletedConnection",false);
+                value.put("lastActivity",c.getCreatedAt());
+                return value;
+            });
+            if("APPROVED".equals(status)) item.put("hasActiveConnection",true);
+            if("COMPLETED".equals(status)) item.put("hasCompletedConnection",true);
+            if(c.getCreatedAt()!=null && (item.get("lastActivity")==null ||
+                c.getCreatedAt().isAfter((LocalDateTime)item.get("lastActivity")))) item.put("lastActivity",c.getCreatedAt());
         }
         for(Map<String,Object> item:linkedStudents.values()) {
             boolean active=Boolean.TRUE.equals(item.get("hasActiveConnection"));
