@@ -440,13 +440,15 @@ public class WorkspaceController {
         User u = user(authorization);
         if (u == null) return unauthorized();
         if (!"ADMIN".equals(u.getRole())) return forbidden();
+        Map<Long,String> ownerEmails = new HashMap<>();
+        users.findAll().forEach(account -> ownerEmails.put(account.getId(), account.getEmail()));
         return ResponseEntity.ok(teachers.findAll().stream().map(t -> {
             Map<String,Object> item = new LinkedHashMap<>();
             item.put("id", t.getId()); item.put("name", t.getName()); item.put("category", t.getCategory());
             item.put("location", t.getLocation()); item.put("experience", t.getExperience());
             item.put("verified", t.isVerified()); item.put("available", t.isAvailable());
             item.put("rejectionReason", t.getRejectionReason()); item.put("rejectedAt", t.getRejectedAt());
-            item.put("ownerEmail", users.findById(t.getOwnerUserId() == null ? -1L : t.getOwnerUserId()).map(User::getEmail).orElse(""));
+            item.put("ownerEmail", ownerEmails.getOrDefault(t.getOwnerUserId(), ""));
             return item;
         }).toList());
     }
